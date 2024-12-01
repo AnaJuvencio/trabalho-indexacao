@@ -83,7 +83,7 @@ int qsort_inverted_list_primary_search(const void *a, const void *b) {
 }
 
 
-/* Cria o índice respectivo */
+/* Cria o índice respectivo  (já estava feito --Ana)*/ 
 void criar_jogadores_idx() {
 	if (!jogadores_idx)
 		jogadores_idx = malloc(MAX_REGISTROS * sizeof(jogadores_index));
@@ -273,7 +273,7 @@ void criar_jogador_kits_idx() {
 }
 
 
-/* Recupera do arquivo o registro com o RRN informado
+/* Recupera do arquivo o registro com o RRN informado (já estava feito) --Ana
  * e retorna os dados nas structs */
 Jogador recuperar_registro_jogador(int rrn) {
 	Jogador j;
@@ -315,21 +315,90 @@ Jogador recuperar_registro_jogador(int rrn) {
 
 
 Kit recuperar_registro_kit(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_kit()");
+    Kit k;
+    char data[TAM_REGISTRO_KIT + 1], *p;
+
+    // Copia os dados do registro do kit do arquivo para a variável data
+    strncpy(data, ARQUIVO_KITS + (rrn * TAM_REGISTRO_KIT), TAM_REGISTRO_KIT);
+    data[TAM_REGISTRO_KIT] = '\0'; // Garante terminação nula
+
+    // Divide os dados do registro do kit usando o delimitador ";"
+    p = strtok(data, ";");
+    strcpy(k.id_kit, p);  
+
+    p = strtok(NULL, ";");
+    strcpy(k.nome, p);  
+
+    p = strtok(NULL, ";");
+    strcpy(k.poder, p); 
+
+    p = strtok(NULL, ";");
+    k.preco = atof(p);  
+
+    return k;
 }
+
 
 
 Partida recuperar_registro_partida(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_partida()");
+    Partida p;
+    char data[TAM_REGISTRO_PARTIDA + 1], *token;
+
+    // Copia o registro do arquivo com base no RRN
+    strncpy(data, ARQUIVO_PARTIDAS + (rrn * TAM_REGISTRO_PARTIDA), TAM_REGISTRO_PARTIDA);
+    data[TAM_REGISTRO_PARTIDA] = '\0'; // Garante terminação nula
+
+    // Divide os dados do registro da partida usando o delimitador ";"
+    token = strtok(data, ";");
+    strcpy(p.id_partida, token);  
+
+    token = strtok(NULL, ";");
+    strcpy(p.inicio, token);  
+
+    token = strtok(NULL, ";");
+    strcpy(p.duracao, token);  
+
+    token = strtok(NULL, ";");
+    strcpy(p.cenario, token);  
+
+    token = strtok(NULL, ";");
+    strcpy(p.id_jogadores, token);  // Ids dos jogadores (separados por "|")
+
+    return p;
 }
+
 
 
 Resultado recuperar_registro_resultado(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_resultado()");
+    Resultado r;
+    char data[TAM_REGISTRO_RESULTADO + 1], *p;
+
+    // Copia os dados do registro de resultado do arquivo para a variável data
+    strncpy(data, ARQUIVO_RESULTADOS + (rrn * TAM_REGISTRO_RESULTADO), TAM_REGISTRO_RESULTADO);
+    data[TAM_REGISTRO_RESULTADO] = '\0'; // Garante terminação nula
+
+    // Divide os dados do registro do resultado usando o delimitador ";"
+    p = strtok(data, ";");
+    strcpy(r.id_jogador, p); 
+
+    p = strtok(NULL, ";");
+    strcpy(r.id_partida, p); 
+
+    p = strtok(NULL, ";");
+    strcpy(r.id_kit, p); 
+
+    p = strtok(NULL, ";");
+    r.colocacao = atoi(p); 
+
+    p = strtok(NULL, ";");
+    strcpy(r.sobrevivencia, p); 
+
+    p = strtok(NULL, ";");
+    r.eliminacoes = atoi(p); 
+
+    return r;
 }
+
 
 
 /* Escreve em seu respectivo arquivo na posição informada (RRN) */
