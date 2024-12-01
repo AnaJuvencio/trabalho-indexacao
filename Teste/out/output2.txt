@@ -1,0 +1,42 @@
+Indice jogadores_idx criado com sucesso!
+Indice kits_idx criado com sucesso!
+Indice partidas_idx criado com sucesso!
+Indice resultados_idx criado com sucesso!
+Indice preco_kit_idx criado com sucesso!
+Indice jogador_kits_idx criado com sucesso!
+Indice data_idx criado com sucesso!
+INSERT INTO jogadores VALUES ('93804621236', 'looz');
+OK
+INSERT INTO jogadores VALUES ('57209482376', 'rinoranchero');
+OK
+INSERT INTO jogadores VALUES ('72176828461', 'certyXD');
+OK
+INSERT INTO jogadores VALUES ('72176828461', 'zephyre');
+ERRO: Ja existe um registro com a chave 72176828461
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+OK
+INSERT INTO kits VALUES ('Stomper', 'Causa dano ao cair sobre o inimigo', 2232);
+OK
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+OK
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+57209482376, rinoranchero, 202103260628, 000000000000, 0.00
+72176828461, certyXD, 202104041659, 000000000000, 0.00
+93804621236, looz, 202103181430, 000000000000, 0.00
+\echo file ARQUIVO_JOGADORES
+93804621236;looz;202103181430;000000000000;0000000000.00;;##############################################################################57209482376;rinoranchero;202103260628;000000000000;0000000000.00;;######################################################################72176828461;certyXD;202104041659;000000000000;0000000000.00;;###########################################################################
+\echo index jogadores_idx
+57209482376, 1
+72176828461, 2
+93804621236, 0
+\echo file ARQUIVO_KITS
+000;Kangaroo;Foguete que permite salto duplo;0000001487.00;#########################################001;Stomper;Causa dano ao cair sobre o inimigo;0000002232.00;#######################################002;Viper;Atinge o inimigo com veneno;0000002579.00;################################################
+\echo index kits_idx
+000, 0
+001, 1
+002, 2
+\echo index preco_kit_idx
+1487.00, 000
+2232.00, 001
+2579.00, 002
+\q

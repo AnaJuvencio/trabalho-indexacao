@@ -1,0 +1,10 @@
+INSERT INTO jogadores VALUES ('91230842311', 'Badast');
+INSERT INTO jogadores VALUES ('59932519774', 'rafz');
+INSERT INTO jogadores VALUES ('91004621999', 'zephyrer');
+INSERT INTO jogadores VALUES ('91230842311', 'budokkan');
+UPDATE jogadores SET saldo = saldo + 930 WHERE id_jogador = '59932519774';
+UPDATE jogadores SET saldo = saldo + 2135 WHERE id_jogador = '53871682559';
+UPDATE jogadores SET saldo = saldo + -621 WHERE id_jogador = '59932519774';
+\echo file ARQUIVO_JOGADORES
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+\q

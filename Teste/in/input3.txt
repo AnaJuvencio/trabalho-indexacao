@@ -1,0 +1,45 @@
+INSERT INTO jogadores VALUES ('93804621236', 'looz');
+INSERT INTO jogadores VALUES ('57653993524', 'gotzupvp');
+INSERT INTO jogadores VALUES ('59932519774', 'rafz');
+INSERT INTO jogadores VALUES ('93804621236', 'zephyrer');
+INSERT INTO jogadores VALUES ('51004621955', 'el grande padre');
+INSERT INTO jogadores VALUES ('72839562301', 'reinhard');
+INSERT INTO jogadores VALUES ('83920564723', 'rem');
+INSERT INTO jogadores VALUES ('91230562845', 'emilia');
+INSERT INTO jogadores VALUES ('67392034567', 'creeper');
+INSERT INTO jogadores VALUES ('59320481235', 'mario');
+INSERT INTO jogadores VALUES ('83920491234', 'subaru');
+INSERT INTO jogadores VALUES ('72849561234', 'Luizerah');
+INSERT INTO jogadores VALUES ('57209482376', 'rinoranchero');
+INSERT INTO jogadores VALUES ('91230842311', 'badast');
+INSERT INTO jogadores VALUES ('81234567891', 'rodinez');
+INSERT INTO kits VALUES ('Kit Basico', 'Nada de especial', 0);
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+INSERT INTO kits VALUES ('Stomper', 'Causa dano ao cair sobre o inimigo', 2232);
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+INSERT INTO kits VALUES ('RBD', 'Ao morrer, permite voltar 10s antes de sua morte', 3899);
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '93804621236';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '57653993524';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '59932519774';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '51004621955';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '72839562301';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '83920564723';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '91230562845';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '67392034567';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '59320481235';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '83920491234';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '72849561234';
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '57209482376';
+INSERT INTO partidas VALUES ('202411142120', '212045', '0001', '938046212365765399352459932519774510046219557283956230183920564723912305628456739203456759320481235839204912347284956123457209482376', '000000000000000000000000000000000000', '022035021512020710015753014430013322011532011054010122005110004120002310', '001100000000000000000000000000000000000000000000');
+SELECT * FROM jogadores WHERE id_jogador = '57653993524';
+SELECT * FROM jogadores WHERE id_jogador = '72428989929';
+SELECT * FROM partidas WHERE id_partida = '00000000';
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+\echo file ARQUIVO_JOGADORES
+\echo index jogadores_idx
+\echo file ARQUIVO_KITS
+\echo index kits_idx
+\echo index preco_kit_idx
+\echo file ARQUIVO_PARTIDAS
+\echo index partidas_idx
+\q
