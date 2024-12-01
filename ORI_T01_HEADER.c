@@ -434,20 +434,89 @@ void escrever_registro_jogador(Jogador j, int rrn) {
 }
 
 void escrever_registro_kit(Kit k, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_kit()");
+    char data[TAM_REGISTRO_KIT + 1], number[100];
+    data[0] = '\0'; 
+    number[0] = '\0';
+
+    // Concatena os campos na string `data`
+    strcat(data, k.id_kit);
+    strcat(data, ";");
+    strcat(data, k.nome);
+    strcat(data, ";");
+    strcat(data, k.poder);
+    strcat(data, ";");
+
+    // Formata o preço como string
+    sprintf(number, "%013.2lf", k.preco);
+    strcat(data, number);
+    strcat(data, ";");
+
+    // Preenche o restante com padding até TAM_REGISTRO_KIT
+    strpadright(data, '#', TAM_REGISTRO_KIT);
+
+    // Escreve no arquivo na posição correspondente
+    strncpy(ARQUIVO_KITS + rrn * TAM_REGISTRO_KIT, data, TAM_REGISTRO_KIT);
 }
+
 
 
 void escrever_registro_partida(Partida p, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_partida()");
+    char data[TAM_REGISTRO_PARTIDA + 1];
+    data[0] = '\0';
+
+    // Concatena os campos na string `data`
+    strcat(data, p.id_partida);
+    strcat(data, ";");
+    strcat(data, p.inicio);
+    strcat(data, ";");
+    strcat(data, p.duracao);
+    strcat(data, ";");
+    strcat(data, p.cenario);
+    strcat(data, ";");
+    strcat(data, p.id_jogadores);
+    strcat(data, ";");
+
+    // Preenche o restante com padding até TAM_REGISTRO_PARTIDA
+    strpadright(data, '#', TAM_REGISTRO_PARTIDA);
+
+    // Escreve no arquivo na posição correspondente
+    strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
 
-void escrever_registro_resultado (Resultado jp, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_resultado()");
+/*conferir*/
+void escrever_registro_resultado(Resultado jp, int rrn) {
+    char data[TAM_REGISTRO_RESULTADO + 1], number[50];
+    data[0] = '\0'; 
+    number[0] = '\0';
+
+    // Concatena os campos na string `data`
+    strcat(data, jp.id_jogador);
+    strcat(data, ";");
+    strcat(data, jp.id_partida);
+    strcat(data, ";");
+    strcat(data, jp.id_kit);
+    strcat(data, ";");
+
+    // Formata a colocação como string
+    sprintf(number, "%d", jp.colocacao);
+    strcat(data, number);
+    strcat(data, ";");
+
+    strcat(data, jp.sobrevivencia);
+    strcat(data, ";");
+
+    // Formata as eliminações como string
+    sprintf(number, "%d", jp.eliminacoes);
+    strcat(data, number);
+    strcat(data, ";");
+
+    // Preenche o restante com padding até TAM_REGISTRO_RESULTADO
+    strpadright(data, '#', TAM_REGISTRO_RESULTADO);
+
+    // Escreve no arquivo na posição correspondente
+    strncpy(ARQUIVO_RESULTADOS + rrn * TAM_REGISTRO_RESULTADO, data, TAM_REGISTRO_RESULTADO);
 }
+
 
 
 /* Exibe um registro com base no RRN */
