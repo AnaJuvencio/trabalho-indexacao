@@ -15,7 +15,6 @@
 /* ===========================================================================
  * ================================= FUNÇÕES ================================= */
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
-unsigned qtd_preco_kit = 0;
 
 /* Funções auxiliares para o qsort. */
 
