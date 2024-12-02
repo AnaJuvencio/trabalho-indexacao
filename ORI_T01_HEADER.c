@@ -438,7 +438,7 @@ void escrever_registro_kit(Kit k, int rrn) {
     data[0] = '\0'; 
     number[0] = '\0';
 
-    // Concatena os campos na string `data`
+    // Concatena os campos na string data
     strcat(data, k.id_kit);
     strcat(data, ";");
     strcat(data, k.nome);
@@ -464,7 +464,7 @@ void escrever_registro_partida(Partida p, int rrn) {
     char data[TAM_REGISTRO_PARTIDA + 1];
     data[0] = '\0';
 
-    // Concatena os campos na string `data`
+    // Concatena os campos na string data
     strcat(data, p.id_partida);
     strcat(data, ";");
     strcat(data, p.inicio);
@@ -489,7 +489,7 @@ void escrever_registro_resultado(Resultado jp, int rrn) {
     data[0] = '\0'; 
     number[0] = '\0';
 
-    // Concatena os campos na string `data`
+    // Concatena os campos na string data
     strcat(data, jp.id_jogador);
     strcat(data, ";");
     strcat(data, jp.id_partida);
@@ -532,14 +532,30 @@ bool exibir_jogador(int rrn) {
 }
 
 bool exibir_kit(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_kit()");
+    if (rrn < 0)
+        return false;
+
+    Kit k = recuperar_registro_kit(rrn);
+
+    //Exibe os campos do registro do kit
+    printf("%s, %s, %s, %.2lf\n", k.id_kit, k.nome, k.poder, k.preco);
+
+    return true;
 }
 
+
 bool exibir_partida(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_partida()");
+    if (rrn < 0)
+        return false;
+
+    Partida p = recuperar_registro_partida(rrn);
+
+    //Exibe os campos do registro da partida
+    printf("%s, %s, %s, %s, %s\n", p.id_partida, p.inicio, p.duracao, p.cenario, p.id_jogadores);
+
+    return true;
 }
+
 
 
 /* Funções principais */
