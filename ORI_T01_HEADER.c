@@ -619,15 +619,34 @@ void buscar_jogador_id_menu(char *id_jogador) {
 
 
 void buscar_kit_id_menu(char *id_kit) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_kit_id_menu()");
+    kits_index index;
+    strcpy(index.id_kit, id_kit);
+
+    // Busca binária no índice de kits
+    int found = busca_binaria((void*)&index, kits_idx, qtd_registros_kits, sizeof(kits_index),qsort_kits_idx, true, 0);
+    // Verificando o resultado da busca
+    if (found == -1)
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    else
+        exibir_kit(kits_idx[found].rrn);  // Exibe o kit encontrado
 }
+
 
 
 void buscar_partida_id_menu(char *id_partida) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_partida_id_menu()");
+    partidas_index index;
+    strcpy(index.id_partida, id_partida);
+
+    // Busca binária no índice primário de partidas
+    int found = busca_binaria((void*)&index, partidas_idx, qtd_registros_partidas,sizeof(partidas_index),qsort_partidas_idx, true, 0);
+    // Verificando se a partida foi encontrada
+    if (found == -1) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);  
+    } else {
+        exibir_partida(partidas_idx[found].rrn);  // Exibe os dados da partida encontrada
+    }
 }
+
 
 
 /* Listagem */
