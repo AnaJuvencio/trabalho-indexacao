@@ -642,11 +642,29 @@ void listar_jogadores_id_menu() {
 			exibir_jogador(jogadores_idx[i].rrn);
 }
 
+/*utiliza busca binária?*/
+void listar_jogadores_kits_menu(char *kit) {
+    bool encontrou = false;
 
-void listar_jogadores_kits_menu(char *kit){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_jogadores_kits_menu()");
+    if (qtd_registros_jogadores == 0) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+    for (unsigned int i = 0; i < qtd_registros_jogadores; i++) {
+        // Recupera o jogador pelo RRN
+        Jogador jogador = recuperar_registro_jogador(jogadores_idx[i].rrn);
+
+        // Verificando se o kit do jogador tem a string especificada
+        if (strstr(jogador.kits, kit) != NULL) {
+            exibir_jogador(jogadores_idx[i].rrn);
+            encontrou = true;
+        }
+    }
+
+    if (!encontrou)
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
 }
+
 
 
 void listar_kits_compra_menu(char *id_jogador) {
@@ -748,13 +766,13 @@ void liberar_espaco_menu() {
 }
 
 
-/* Liberar memória e encerrar programa */
+/* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande */
 void liberar_memoria_menu() {
     //Array de ponteiros para os índices
     void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
 
-    // Libera cada índice
+    // Liberando cada índice
     for (int i = 0; i < num_indices; i++) {
         if (indices[i]) {
             free(indices[i]);
@@ -762,7 +780,7 @@ void liberar_memoria_menu() {
         }
     }
 
-    printf("Memória liberada e programa encerrado com sucesso.\n");
+    /*printf("memória liberada com sucesso.\n");*/
     exit(0); //Encerra o programa
 }
 
