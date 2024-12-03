@@ -50,14 +50,33 @@ int qsort_resultados_idx(const void *a, const void *b) {
 
 
 int qsort_preco_kit_idx(const void *a, const void *b) {
-    return strcmp(((preco_kit_index *)a)->id_kit, ((preco_kit_index *)b)->id_kit);
+    preco_kit_index *kit_a = (preco_kit_index *)a;
+    preco_kit_index *kit_b = (preco_kit_index *)b;
+
+    // Comparação dos preços
+    int cmp = (kit_a->preco > kit_b->preco) - (kit_a->preco < kit_b->preco);
+    if (cmp != 0) {
+        return cmp;
+    }
+
+    // Caso o preço seja igual, compararemos os IDs
+    return strcmp(kit_a->id_kit, kit_b->id_kit);
 }
 
 
 
 /* Função usada na comparação entre as chaves do índice data_idx */
 int qsort_data_idx(const void *a, const void *b) {
-    return strcmp(((data_index *)a)->id_partida, ((data_index *)b)->id_partida);
+    data_index *data_a = (data_index *)a;
+    data_index *data_b = (data_index *)b;
+
+    // Comparação pela data
+    int cmp = strcmp(data_a->inicio, data_b->inicio);
+    if (cmp != 0)
+        return cmp;
+
+    // Comparação pelo ID da partida (desempate)
+    return strcmp(data_a->id_partida, data_b->id_partida);
 }
 
 
@@ -121,34 +140,27 @@ void criar_kits_idx() {
         exit(1);
     }
 
-    // Inicializa o índice percorrendo os registros no arquivo
-    unsigned qtd_registros_validos = 0; // Para contar apenas registros válidos
+    // Preenche o índice percorrendo os registros no arquivo
     for (unsigned i = 0; i < qtd_registros_kits; ++i) {
-        Kit k = recuperar_registro_kit(i); // Função para recuperar um kit a partir do RRN
+        Kit k = recuperar_registro_kit(i); // Recupera o kit do arquivo
 
-        // Verifica se o registro foi excluído
-        if (strncmp(k.id_kit, "*|", 2) == 0) {
-            continue; // Pula registros excluídos
-        }
-
-        // Preenche o índice com dados válidos
-        strncpy(kits_idx[qtd_registros_validos].id_kit, k.id_kit, TAM_ID_KIT - 1);
-        kits_idx[qtd_registros_validos].id_kit[TAM_ID_KIT - 1] = '\0'; // Garante terminação nula
-        kits_idx[qtd_registros_validos].rrn = i;
-
-        ++qtd_registros_validos;
+        // Preenche o índice com os dados do kit
+        strncpy(kits_idx[i].id_kit, k.id_kit, TAM_ID_KIT - 1);
+        kits_idx[i].id_kit[TAM_ID_KIT - 1] = '\0'; // Garante terminação nula
+        kits_idx[i].rrn = i;
     }
 
     // Ordena o índice pelo campo id_kit
-    qsort(kits_idx, qtd_registros_validos, sizeof(kits_index), qsort_kits_idx);
+    qsort(kits_idx, qtd_registros_kits, sizeof(kits_index), qsort_kits_idx);
 
     printf(INDICE_CRIADO, "kits_idx");
 }
 
 
 
+
 void criar_partidas_idx() {
-	if (!partidas_idx)
+    if (!partidas_idx)
         partidas_idx = malloc(MAX_REGISTROS * sizeof(partidas_index));
 
     if (!partidas_idx) { // Verifica falha na alocação
@@ -156,29 +168,22 @@ void criar_partidas_idx() {
         exit(1);
     }
 
-    // Inicializa o índice percorrendo os registros no arquivo
-    unsigned qtd_registros_validos = 0; // Conta apenas registros válidos
+    // Inicializa o índice percorrendo todos os registros
     for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
         Partida p = recuperar_registro_partida(i); // Recupera o registro de partida pelo RRN
 
-        // Verifica se o registro foi excluído
-        if (strncmp(p.id_partida, "*|", 2) == 0) {
-            continue; // Ignora registros excluídos
-        }
-
-        // Preenche o índice com dados válidos
-        strncpy(partidas_idx[qtd_registros_validos].id_partida, p.id_partida, TAM_ID_PARTIDA - 1);
-        partidas_idx[qtd_registros_validos].id_partida[TAM_ID_PARTIDA - 1] = '\0'; // Garante terminação nula
-        partidas_idx[qtd_registros_validos].rrn = i;
-
-        ++qtd_registros_validos;
+        // Preenche o índice diretamente
+        strncpy(partidas_idx[i].id_partida, p.id_partida, TAM_ID_PARTIDA - 1);
+        partidas_idx[i].id_partida[TAM_ID_PARTIDA - 1] = '\0'; // Garante terminação nula
+        partidas_idx[i].rrn = i;
     }
 
     // Ordena o índice pelo campo id_partida
-    qsort(partidas_idx, qtd_registros_validos, sizeof(partidas_index), qsort_partidas_idx);
+    qsort(partidas_idx, qtd_registros_partidas, sizeof(partidas_index), qsort_partidas_idx);
 
     printf(INDICE_CRIADO, "partidas_idx");
 }
+
 
 
 void criar_resultados_idx() {
@@ -190,33 +195,26 @@ void criar_resultados_idx() {
         exit(1);
     }
 
-    // Inicializa o índice percorrendo os registros no arquivo
-    unsigned qtd_registros_validos = 0; // Conta apenas registros válidos
+    // Inicializa o índice percorrendo todos os registros
     for (unsigned i = 0; i < qtd_registros_resultados; ++i) {
         Resultado r = recuperar_registro_resultado(i); // Recupera o registro de resultado pelo RRN
 
-        // Verifica se o registro foi excluído
-        if (strncmp(r.id_jogador, "*|", 2) == 0) {
-            continue; // Ignora registros excluídos
-        }
+        // Preenche o índice diretamente
+        strncpy(resultados_idx[i].id_jogador, r.id_jogador, TAM_ID_JOGADOR - 1);
+        resultados_idx[i].id_jogador[TAM_ID_JOGADOR - 1] = '\0'; // Garante terminação nula
 
-        // Preenche o índice com dados válidos
-        strncpy(resultados_idx[qtd_registros_validos].id_jogador, r.id_jogador, TAM_ID_JOGADOR - 1);
-        resultados_idx[qtd_registros_validos].id_jogador[TAM_ID_JOGADOR - 1] = '\0'; // Garante terminação nula
+        strncpy(resultados_idx[i].id_partida, r.id_partida, TAM_ID_PARTIDA - 1);
+        resultados_idx[i].id_partida[TAM_ID_PARTIDA - 1] = '\0'; // Garante terminação nula
 
-        strncpy(resultados_idx[qtd_registros_validos].id_partida, r.id_partida, TAM_ID_PARTIDA - 1);
-        resultados_idx[qtd_registros_validos].id_partida[TAM_ID_PARTIDA - 1] = '\0'; // Garante terminação nula
-
-        resultados_idx[qtd_registros_validos].rrn = i;
-
-        ++qtd_registros_validos;
+        resultados_idx[i].rrn = i;
     }
 
     // Ordena o índice primeiro por id_jogador e depois por id_partida
-    qsort(resultados_idx, qtd_registros_validos, sizeof(resultados_index), qsort_resultados_idx);
+    qsort(resultados_idx, qtd_registros_resultados, sizeof(resultados_index), qsort_resultados_idx);
 
     printf(INDICE_CRIADO, "resultados_idx");
 }
+
 
 
 
@@ -427,9 +425,7 @@ void escrever_registro_jogador(Jogador j, int rrn) {
 	}
 	strcat(data, ";");
 
-
 	strpadright(data, '#', TAM_REGISTRO_JOGADOR);
-
 	strncpy(ARQUIVO_JOGADORES + rrn*TAM_REGISTRO_JOGADOR, data, TAM_REGISTRO_JOGADOR);
 }
 
@@ -453,7 +449,6 @@ void escrever_registro_kit(Kit k, int rrn) {
 
     // Preenche o restante com padding até TAM_REGISTRO_KIT
     strpadright(data, '#', TAM_REGISTRO_KIT);
-
     // Escreve no arquivo na posição correspondente
     strncpy(ARQUIVO_KITS + rrn * TAM_REGISTRO_KIT, data, TAM_REGISTRO_KIT);
 }
@@ -478,7 +473,6 @@ void escrever_registro_partida(Partida p, int rrn) {
 
     // Preenche o restante com padding até TAM_REGISTRO_PARTIDA
     strpadright(data, '#', TAM_REGISTRO_PARTIDA);
-
     // Escreve no arquivo na posição correspondente
     strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
@@ -486,7 +480,7 @@ void escrever_registro_partida(Partida p, int rrn) {
 /*conferir*/
 void escrever_registro_resultado(Resultado jp, int rrn) {
     char data[TAM_REGISTRO_RESULTADO + 1], number[50];
-    data[0] = '\0'; 
+    data[0] = '\0';
     number[0] = '\0';
 
     // Concatena os campos na string data
@@ -497,16 +491,16 @@ void escrever_registro_resultado(Resultado jp, int rrn) {
     strcat(data, jp.id_kit);
     strcat(data, ";");
 
-    // Formata a colocação como string
-    sprintf(number, "%d", jp.colocacao);
+    // Formata a colocação como string de 4 bytes
+    sprintf(number, "%04d", jp.colocacao);
     strcat(data, number);
     strcat(data, ";");
 
     strcat(data, jp.sobrevivencia);
     strcat(data, ";");
 
-    // Formata as eliminações como string
-    sprintf(number, "%d", jp.eliminacoes);
+    // Formata as eliminações como string de 4 bytes
+    sprintf(number, "%04d", jp.eliminacoes);
     strcat(data, number);
     strcat(data, ";");
 
@@ -525,21 +519,15 @@ bool exibir_jogador(int rrn) {
 		return false;
 
 	Jogador j = recuperar_registro_jogador(rrn);
-
 	printf ("%s, %s, %s, %s, %.2lf\n", j.id_jogador, j.apelido, j.cadastro, j.premio, j.saldo);
-
 	return true;
 }
 
 bool exibir_kit(int rrn) {
     if (rrn < 0)
         return false;
-
     Kit k = recuperar_registro_kit(rrn);
-
-    //Exibe os campos do registro do kit
     printf("%s, %s, %s, %.2lf\n", k.id_kit, k.nome, k.poder, k.preco);
-
     return true;
 }
 
@@ -547,12 +535,8 @@ bool exibir_kit(int rrn) {
 bool exibir_partida(int rrn) {
     if (rrn < 0)
         return false;
-
     Partida p = recuperar_registro_partida(rrn);
-
-    //Exibe os campos do registro da partida
     printf("%s, %s, %s, %s, %s\n", p.id_partida, p.inicio, p.duracao, p.cenario, p.id_jogadores);
-
     return true;
 }
 
@@ -766,9 +750,22 @@ void liberar_espaco_menu() {
 
 /* Liberar memória e encerrar programa */
 void liberar_memoria_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "liberar_memoria_menu()");
+    //Array de ponteiros para os índices
+    void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx};
+    int num_indices = sizeof(indices) / sizeof(indices[0]);
+
+    // Libera cada índice
+    for (int i = 0; i < num_indices; i++) {
+        if (indices[i]) {
+            free(indices[i]);
+            indices[i] = NULL;
+        }
+    }
+
+    printf("Memória liberada e programa encerrado com sucesso.\n");
+    exit(0); //Encerra o programa
 }
+
 
 
 /* Funções de manipulação de Lista Invertida */
