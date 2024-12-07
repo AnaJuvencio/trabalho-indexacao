@@ -739,22 +739,27 @@ void imprimir_arquivo_jogadores_menu() {
 
 
 void imprimir_arquivo_kits_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_kits_menu()");
+    if (qtd_registros_kits == 0) // Verifica se o arquivo de kits está vazio
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_KITS);
 }
 
 
 void imprimir_arquivo_partidas_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_partidas_menu()");
+    if (qtd_registros_partidas == 0) // Verifica se o arquivo de partidas está vazio
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_PARTIDAS);
 }
 
 
 void imprimir_arquivo_resultados_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_resultados_menu()");
+    if (qtd_registros_resultados == 0) // Verifica se o arquivo de resultados está vazio
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_RESULTADOS);
 }
-
 
 /* Imprimir índices primários */
 void imprimir_jogadores_idx_menu() {
