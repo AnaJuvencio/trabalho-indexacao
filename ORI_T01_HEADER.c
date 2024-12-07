@@ -477,7 +477,7 @@ void escrever_registro_partida(Partida p, int rrn) {
     strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
 
-/*conferir*/
+
 void escrever_registro_resultado(Resultado jp, int rrn) {
     char data[TAM_REGISTRO_RESULTADO + 1], number[50];
     data[0] = '\0';
@@ -650,32 +650,82 @@ void listar_jogadores_kits_menu(char *kit) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
     }
+
     for (unsigned int i = 0; i < qtd_registros_jogadores; i++) {
         // Recupera o jogador pelo RRN
         Jogador jogador = recuperar_registro_jogador(jogadores_idx[i].rrn);
 
-        // Verificando se o kit do jogador tem a string especificada
-        if (strstr(jogador.kits, kit) != NULL) {
-            exibir_jogador(jogadores_idx[i].rrn);
-            encontrou = true;
+        // Itera pelos kits do jogador para verificar se possui o kit especificado
+        for (unsigned int j = 0; j < QTD_MAX_KITS; j++) {
+            if (strcmp(jogador.kits[j], kit) == 0) {
+                exibir_jogador(jogadores_idx[i].rrn);
+                encontrou = true;
+                break;
+            }
         }
     }
 
-    if (!encontrou)
+    if (!encontrou) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
 }
 
 
-
 void listar_kits_compra_menu(char *id_jogador) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_kits_compra_menu()");
+    int posicao = -1;
+
+    // Busca o jogador pelo ID
+    jogadores_index index;
+    strcpy(index.id_jogador, id_jogador);
+    posicao = busca_binaria((void*)&index, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, true, 0);
+
+    if (posicao == -1) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Recupera e exibe os kits do jogador
+    Jogador jogador = recuperar_registro_jogador(jogadores_idx[posicao].rrn);
+    bool encontrou_kit = false;
+
+    for (unsigned int i = 0; i < QTD_MAX_KITS; i++) {
+        if (strlen(jogador.kits[i]) > 0) {
+            if (!encontrou_kit) {
+                printf("Kits comprados pelo jogador %s:\n", id_jogador);
+                encontrou_kit = true;
+            }
+            printf("- %s\n", jogador.kits[i]);
+        }
+    }
+
+    if (!encontrou_kit) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
 }
 
 
 void listar_partidas_periodo_menu(char *data_inicio, char *data_fim) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_partidas_periodo_menu()");
+    bool encontrou = false;
+
+    if (qtd_registros_partidas == 0) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+
+    for (unsigned int i = 0; i < qtd_registros_partidas; i++) {
+        // Recupera a partida pelo RRN
+        Partida partida = recuperar_registro_partida(partidas_idx[i].rrn);
+
+        // Verifica se a data está dentro do intervalo especificado
+        if (strcmp(partida.inicio, data_inicio) >= 0 && strcmp(partida.inicio, data_fim) <= 0) {
+            exibir_partida(partidas_idx[i].rrn);
+            encontrou = true;
+        }
+    }
+
+    if (!encontrou) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
 }
 
 
