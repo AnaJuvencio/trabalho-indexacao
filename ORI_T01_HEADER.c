@@ -832,19 +832,43 @@ void imprimir_jogador_kits_primario_idx_menu() {
 }
 
 
+//a primeira ideia era criar um buffer
 /* Liberar espaço */
-void liberar_espaco_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu()");
+void liberar_espaco_menu() { //Mas essa função tem um menor uso de memória, pois evita a criação de buffers desnecessários.
+    if (qtd_registros_jogadores == 0) {
+        printf(ERRO_ARQUIVO_VAZIO);
+        return;
+    }
+    int rrn_atual = 0; // RRN atualizado para os registros válidos
+    for (int i = 0; i < qtd_registros_jogadores; ++i) {
+        // Recupera o registro do jogador no índice atual
+        Jogador jogador = recuperar_registro_jogador(rrn_atual);
+        // Verifica se o registro é não excluído
+        if (strcmp(jogador.id_jogador, "*") != 0) {
+            // Reescreve o registro no arquivo de dados no RRN correspondente
+            escrever_registro_jogador(jogador, rrn_atual);
+            // Atualiza o índice com o novo RRN
+            strcpy(jogadores_idx[rrn_atual].id_jogador, jogador.id_jogador);
+            jogadores_idx[rrn_atual].rrn = rrn_atual;
+            rrn_atual++; // Incrementando o RRN para a próxima posição válida
+        }
+    }
+    // Atualizando o número de registros para o número de registros válidos
+    qtd_registros_jogadores = rrn_atual;
+    // Marcando o fim do arquivo com \0
+    ARQUIVO_JOGADORES[rrn_atual * TAM_REGISTRO_JOGADOR] = '\0';
+    // Reordena os índices pelo ID do jogador
+    qsort(jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx);
+    printf(SUCESSO); // Exibibindo a mensagem de sucesso
 }
 
 
-/* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande */
+
+/* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande, menos trabalho rs*/
 void liberar_memoria_menu() {
     //Array de ponteiros para os índices
     void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-
     // Liberando cada índice
     for (int i = 0; i < num_indices; i++) {
         if (indices[i]) {
@@ -852,8 +876,7 @@ void liberar_memoria_menu() {
             indices[i] = NULL;
         }
     }
-
-    /*printf("memória liberada com sucesso.\n");*/
+    printf("memória liberada.\n");
     exit(0); //Encerra o programa
 }
 
