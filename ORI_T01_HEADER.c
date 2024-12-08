@@ -803,14 +803,20 @@ void imprimir_resultados_idx_menu() {
 
 /* Imprimir índices secundários */
 void imprimir_preco_kit_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_preco_kit_idx_menu()");
+    if (preco_kit_idx == NULL || qtd_registros_kits == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        for (unsigned i = 0; i < qtd_registros_kits; ++i)
+            printf("%s, %.2f\n", preco_kit_idx[i].id_kit, preco_kit_idx[i].preco);
 }
 
 
 void imprimir_data_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_data_idx_menu()");
+    if (data_idx == NULL || qtd_registros_partidas == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        for (unsigned i = 0; i < qtd_registros_partidas; ++i)
+            printf("%s, %s\n", data_idx[i].inicio, data_idx[i].id_partida);
 }
 
 
