@@ -772,20 +772,32 @@ void imprimir_jogadores_idx_menu() {
 
 
 void imprimir_kits_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_kits_idx_menu()");
+    if (kits_idx == NULL || qtd_registros_kits == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        for (unsigned i = 0; i < qtd_registros_kits; ++i)
+            printf("%s, %d\n", kits_idx[i].id_kit, kits_idx[i].rrn);
 }
 
 
 void imprimir_partidas_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_partidas_idx_menu()");
+    if (partidas_idx == NULL || qtd_registros_partidas == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        for (unsigned i = 0; i < qtd_registros_partidas; ++i)
+            printf("%s, %d\n", partidas_idx[i].id_partida, partidas_idx[i].rrn);
 }
 
 
 void imprimir_resultados_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_resultados_idx_menu()");
+    if (resultados_idx == NULL || qtd_registros_resultados == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        for (unsigned i = 0; i < qtd_registros_resultados; ++i)
+            printf("%s, %s, %d\n", 
+                   resultados_idx[i].id_jogador, 
+                   resultados_idx[i].id_partida, 
+                   resultados_idx[i].rrn);
 }
 
 
