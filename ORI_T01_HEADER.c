@@ -879,16 +879,70 @@ int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_ID
 }
 
 
-/* Funções de busca binária */
+/* Funções de busca binária */ // poxa, deu trabalho rs
 int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int posicao_caso_repetido, int retorno_se_nao_encontrado) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_com_reps()");
-}
+    const char *base = (const char *)base0;
+    size_t lim = nmemb;
+    size_t meio;
+    int cmp;
+    size_t pos_inicial = 0;
 
+    // Exibindo registros percorridos 
+    if (exibir_caminho) {
+        printf("REGS_PERCORRIDOS ");
+    }
+    while (lim > 0) {
+        meio = lim >> 1; // Calculando a mediana
+        const void *p = base + meio * size;
+        cmp = compar(key, p);
+        // Exibindo índice atual no caminho
+        if (exibir_caminho) {
+            printf("%ld", pos_inicial + meio);
+            if (cmp == 0 || lim == 1) {
+                printf("\n"); // Último valor do caminho
+            } else {
+                printf(" "); // Espaço entre índices
+            }
+        }
+        if (cmp == 0) {
+            int pos = pos_inicial + meio;
+            // Tratando as repetições 
+            if (posicao_caso_repetido < 0) {
+                // Localizando a primeira ocorrência
+                while (pos > 0 && compar(key, base0 + (pos - 1) * size) == 0) {
+                    pos--;
+                }
+            } else if (posicao_caso_repetido > 0) {
+                // Localizando a última ocorrência
+                while (pos + 1 < (int)nmemb && compar(key, base0 + (pos + 1) * size) == 0) {
+                    pos++;
+                }
+            }
+            return pos;
+        }
+        if (cmp > 0) {
+            // Movendo para a metade direita
+            base += (meio + 1) * size;
+            pos_inicial += meio + 1;
+            lim -= meio + 1;
+        } else {
+            // Movendo para a metade esquerda
+            lim = meio;
+        }
+    }
+    // Quando a chave não encontrada
+    if (exibir_caminho) {
+        printf("\n"); 
+    }
+    return retorno_se_nao_encontrado;
+} // utilizado como base: https://github.com/gcc-mirror/gcc/blob/master/libiberty/bsearch.c
 
+/* Função de busca binária simples */
 int busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int retorno_se_nao_encontrado) {
-	return busca_binaria_com_reps(key, base0, nmemb, size, compar, exibir_caminho, 0, retorno_se_nao_encontrado);
+    return busca_binaria_com_reps(key, base0, nmemb, size, compar, exibir_caminho, 0, retorno_se_nao_encontrado);
 }
+
+
 
 
 char *strpadright(char *str, char pad, unsigned size){
