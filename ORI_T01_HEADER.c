@@ -131,20 +131,20 @@ void criar_kits_idx() {
     if (!kits_idx)
         kits_idx = malloc(MAX_REGISTROS * sizeof(kits_index));
 
-    if (!kits_idx) { // Verifica falha na alocação
+    if (!kits_idx) { // Verificando falha na alocação
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
-    // Preenche o índice percorrendo os registros no arquivo
+    // Preenchendo o índice percorrendo os registros no arquivo
     for (unsigned i = 0; i < qtd_registros_kits; ++i) {
         Kit k = recuperar_registro_kit(i); // Recupera o kit do arquivo
 
-        // Preenche o índice com os dados do kit
+        // Preenchendo o índice com os dados do kit
         strncpy(kits_idx[i].id_kit, k.id_kit, TAM_ID_KIT - 1);
-        kits_idx[i].id_kit[TAM_ID_KIT - 1] = '\0'; // Garante terminação nula
+        kits_idx[i].id_kit[TAM_ID_KIT - 1] = '\0'; // Garantindo terminação nula
         kits_idx[i].rrn = i;
     }
-    // Ordena o índice pelo campo id_kit
+    // Ordenando o índice pelo campo id_kit
     qsort(kits_idx, qtd_registros_kits, sizeof(kits_index), qsort_kits_idx);
     printf(INDICE_CRIADO, "kits_idx");
 }
@@ -160,7 +160,7 @@ void criar_partidas_idx() {
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
-    // Inicializa o índice percorrendo todos os registros
+    // Inicializando o índice percorrendo todos os registros
     for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
         Partida p = recuperar_registro_partida(i); // Recupera o registro de partida pelo RRN
         // Preenche o índice diretamente
@@ -179,15 +179,15 @@ void criar_resultados_idx() {
     if (!resultados_idx)
         resultados_idx = malloc(MAX_REGISTROS * sizeof(resultados_index));
 
-    if (!resultados_idx) { // Verifica falha na alocação
+    if (!resultados_idx) { // Verificando falha na alocação
         printf(ERRO_MEMORIA_INSUFICIENTE);
         exit(1);
     }
-    // Inicializa o índice percorrendo todos os registros
+    // Inicializando o índice percorrendo todos os registros
     for (unsigned i = 0; i < qtd_registros_resultados; ++i) {
         Resultado r = recuperar_registro_resultado(i); // Recupera o registro de resultado pelo RRN
 
-        // Preenche o índice diretamente
+        // Preenchendo o índice diretamente
         strncpy(resultados_idx[i].id_jogador, r.id_jogador, TAM_ID_JOGADOR - 1);
         resultados_idx[i].id_jogador[TAM_ID_JOGADOR - 1] = '\0'; // Garante terminação nula
 
@@ -196,7 +196,7 @@ void criar_resultados_idx() {
 
         resultados_idx[i].rrn = i;
     }
-    // Ordena o índice primeiro por id_jogador e depois por id_partida
+    // Ordenando o índice primeiro por id_jogador e depois por id_partida
     qsort(resultados_idx, qtd_registros_resultados, sizeof(resultados_index), qsort_resultados_idx);
     printf(INDICE_CRIADO, "resultados_idx");
 }
@@ -234,16 +234,14 @@ void criar_data_idx() {
         exit(1);
     }
 
-    // Preenche o índice com os dados
+    // Preenchendo o índice com os dados
     for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
         Partida p = recuperar_registro_partida(i); // Recupera a partida
         strcpy(data_idx[i].id_partida, p.id_partida);
         strcpy(data_idx[i].inicio, p.inicio); // Armazena a data da partida
     }
-
-    // Ordena o índice pelo id_partida
+    // Ordenando o índice pelo id_partida
     qsort(data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx);
-
     printf(INDICE_CRIADO, "data_idx");
 }
 
@@ -259,7 +257,6 @@ void criar_jogador_kits_idx() {
 Jogador recuperar_registro_jogador(int rrn) {
 	Jogador j;
 	char data[TAM_REGISTRO_JOGADOR + 1], *p;
-
 	strncpy(data, ARQUIVO_JOGADORES + (rrn * TAM_REGISTRO_JOGADOR), TAM_REGISTRO_JOGADOR);
 	data[TAM_REGISTRO_JOGADOR] = '\0';
 
@@ -296,26 +293,21 @@ Jogador recuperar_registro_jogador(int rrn) {
 
 
 Kit recuperar_registro_kit(int rrn) {
+
     Kit k;
     char data[TAM_REGISTRO_KIT + 1], *p;
-
-    // Copia os dados do registro do kit do arquivo para a variável data
+    // Copiando os dados do registro do kit do arquivo para a variável data
     strncpy(data, ARQUIVO_KITS + (rrn * TAM_REGISTRO_KIT), TAM_REGISTRO_KIT);
     data[TAM_REGISTRO_KIT] = '\0'; // Garante terminação nula
-
-    // Divide os dados do registro do kit usando o delimitador ";"
+    // Dividindo os dados do registro do kit usando o delimitador ";"
     p = strtok(data, ";");
     strcpy(k.id_kit, p);  
-
     p = strtok(NULL, ";");
     strcpy(k.nome, p);  
-
     p = strtok(NULL, ";");
     strcpy(k.poder, p); 
-
     p = strtok(NULL, ";");
     k.preco = atof(p);  
-
     return k;
 }
 
@@ -325,23 +317,18 @@ Partida recuperar_registro_partida(int rrn) {
 
     Partida p;
     char data[TAM_REGISTRO_PARTIDA + 1], *token;
-    // Copia o registro do arquivo com base no RRN
+    // Copiando o registro do arquivo com base no RRN
     strncpy(data, ARQUIVO_PARTIDAS + (rrn * TAM_REGISTRO_PARTIDA), TAM_REGISTRO_PARTIDA);
     data[TAM_REGISTRO_PARTIDA] = '\0'; // Garante terminação nula
-
-    // Divide os dados do registro da partida usando o delimitador ";"
+    // Dividndo os dados do registro da partida usando o delimitador ;
     token = strtok(data, ";");
     strcpy(p.id_partida, token);  
-
     token = strtok(NULL, ";");
     strcpy(p.inicio, token);  
-
     token = strtok(NULL, ";");
     strcpy(p.duracao, token);  
-
     token = strtok(NULL, ";");
     strcpy(p.cenario, token);  
-
     token = strtok(NULL, ";");
     strcpy(p.id_jogadores, token);  // Ids dos jogadores (separados por "|")
     return p;
@@ -353,26 +340,20 @@ Resultado recuperar_registro_resultado(int rrn) {
 
     Resultado r;
     char data[TAM_REGISTRO_RESULTADO + 1], *p;
-    // Copia os dados do registro de resultado do arquivo para a variável data
+    // Copiando os dados do registro de resultado do arquivo para a variável data
     strncpy(data, ARQUIVO_RESULTADOS + (rrn * TAM_REGISTRO_RESULTADO), TAM_REGISTRO_RESULTADO);
     data[TAM_REGISTRO_RESULTADO] = '\0'; // Garante terminação nula
-
-    // Divide os dados do registro do resultado usando o delimitador ";"
+    // Dividindo os dados do registro do resultado usando o delimitador ;
     p = strtok(data, ";");
     strcpy(r.id_jogador, p); 
-
     p = strtok(NULL, ";");
     strcpy(r.id_partida, p); 
-
     p = strtok(NULL, ";");
     strcpy(r.id_kit, p); 
-
     p = strtok(NULL, ";");
     r.colocacao = atoi(p); 
-
     p = strtok(NULL, ";");
     strcpy(r.sobrevivencia, p); 
-
     p = strtok(NULL, ";");
     r.eliminacoes = atoi(p); 
     return r;
@@ -385,7 +366,6 @@ void escrever_registro_jogador(Jogador j, int rrn) {
 
 	char data[TAM_REGISTRO_JOGADOR + 1], number[100];
 	data[0] = '\0'; number[0] = '\0';
-
 	strcat(data, j.id_jogador);
 	strcat(data, ";");
 	strcat(data, j.apelido);
@@ -397,7 +377,6 @@ void escrever_registro_jogador(Jogador j, int rrn) {
 	sprintf(number, "%013.2lf", j.saldo);
 	strcat (data, number);
 	strcat(data, ";");
-
 	for (int i = 0; i < QTD_MAX_KITS; ++i) {
 		if (strlen(j.kits[i]) > 0) {
 			if (i != 0)
@@ -415,23 +394,20 @@ void escrever_registro_kit(Kit k, int rrn) {
     char data[TAM_REGISTRO_KIT + 1], number[100];
     data[0] = '\0'; 
     number[0] = '\0';
-
-    // Concatena os campos na string data
+    // Concatenando os campos na string data
     strcat(data, k.id_kit);
     strcat(data, ";");
     strcat(data, k.nome);
     strcat(data, ";");
     strcat(data, k.poder);
     strcat(data, ";");
-
     // Formatando o preço como string
     sprintf(number, "%013.2lf", k.preco);
     strcat(data, number);
     strcat(data, ";");
-
     // Preenchendo o restante com padding até TAM_REGISTRO
     strpadright(data, '#', TAM_REGISTRO_KIT);
-    // Escreve no arquivo na posição correspondente
+    // Escrevendo no arquivo na posição correspondente
     strncpy(ARQUIVO_KITS + rrn * TAM_REGISTRO_KIT, data, TAM_REGISTRO_KIT);
 }
 
@@ -440,7 +416,6 @@ void escrever_registro_kit(Kit k, int rrn) {
 void escrever_registro_partida(Partida p, int rrn) {
     char data[TAM_REGISTRO_PARTIDA + 1];
     data[0] = '\0';
-
     // Concatenando os campos na string data
     strcat(data, p.id_partida);
     strcat(data, ";");
@@ -452,10 +427,9 @@ void escrever_registro_partida(Partida p, int rrn) {
     strcat(data, ";");
     strcat(data, p.id_jogadores);
     strcat(data, ";");
-
     // Preenchendo o restante com padding até TAM_REGISTRO_PARTIDA
     strpadright(data, '#', TAM_REGISTRO_PARTIDA);
-    // Escreve no arquivo na posição correspondente
+    // Escrevendo no arquivo na posição correspondente
     strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
 
@@ -464,28 +438,23 @@ void escrever_registro_resultado(Resultado jp, int rrn) {
     char data[TAM_REGISTRO_RESULTADO + 1], number[50];
     data[0] = '\0';
     number[0] = '\0';
-
-    // Concatena os campos na string data
+    // Concatenando os campos na string data
     strcat(data, jp.id_jogador);
     strcat(data, ";");
     strcat(data, jp.id_partida);
     strcat(data, ";");
     strcat(data, jp.id_kit);
     strcat(data, ";");
-
-    // Formata a colocação como string de 4 bytes
+    // Formatando a colocação como string de 4 bytes
     sprintf(number, "%04d", jp.colocacao);
     strcat(data, number);
     strcat(data, ";");
-
     strcat(data, jp.sobrevivencia);
     strcat(data, ";");
-
-    // Formata as eliminações como string de 4 bytes
+    // Formatanso as eliminações como string de 4 bytes
     sprintf(number, "%04d", jp.eliminacoes);
     strcat(data, number);
     strcat(data, ";");
-
     // Preenchendo o restante com padding até TAM_REGISTRO
     strpadright(data, '#', TAM_REGISTRO_RESULTADO);
     // Escrevendo no arquivo na posição adequada
@@ -625,8 +594,8 @@ void listar_jogadores_id_menu() {
 
 /*utiliza busca binária?*/
 void listar_jogadores_kits_menu(char *kit) {
-    bool encontrou = false;
 
+    bool encontrou = false;
     if (qtd_registros_jogadores == 0) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
@@ -651,32 +620,33 @@ void listar_jogadores_kits_menu(char *kit) {
 
 
 void listar_kits_compra_menu(char *id_jogador) {
-    int posicao = -1;
 
-    // Busca o jogador pelo ID
+    int posicao = -1;
+    // Buscando o jogador pelo Id
     jogadores_index index;
     strcpy(index.id_jogador, id_jogador);
     posicao = busca_binaria((void*)&index, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, true, 0);
-
     if (posicao == -1) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
-
-    // Recupera e exibe os kits do jogador
+    // Recupera o registro do jogador
     Jogador jogador = recuperar_registro_jogador(jogadores_idx[posicao].rrn);
     bool encontrou_kit = false;
-
-    for (unsigned int i = 0; i < QTD_MAX_KITS; i++) {
-        if (strlen(jogador.kits[i]) > 0) {
+    // Verificando os kits disponíveis no sistema
+    for (int i = 0; i < qtd_registros_kits; i++) {
+        Kit kit = recuperar_registro_kit(i);
+        // Verificando se o saldo do jogador é suficiente para comprar o kit
+        if (jogador.saldo >= kit.preco) {
             if (!encontrou_kit) {
-                printf("Kits comprados pelo jogador %s:\n", id_jogador);
+                printf("Kits disponíveis para compra pelo jogador %s:\n", id_jogador);
                 encontrou_kit = true;
             }
-            printf("- %s\n", jogador.kits[i]);
+            printf("- %s (Preço: %.2f)\n", kit.nome, kit.preco);
         }
     }
 
+    // Caso nenhum kit esteja disponível
     if (!encontrou_kit) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
     }
@@ -809,36 +779,34 @@ void imprimir_jogador_kits_primario_idx_menu() {
 }
 
 
-//a primeira ideia era criar um buffer
 /* Liberar espaço */
-void liberar_espaco_menu() { //Mas essa função tem um menor uso de memória, pois evita a criação de buffers desnecessários.
-    if (qtd_registros_jogadores == 0) {
-        printf(ERRO_ARQUIVO_VAZIO);
-        return;
-    }
+
+// A primeira ideia era criar um buffer
+// Mas essa função tem um menor uso de memória, pq evita a criação de buffers desnecessários
+void liberar_espaco_menu() {
     int rrn_atual = 0; // RRN atualizado para os registros válidos
     for (int i = 0; i < qtd_registros_jogadores; ++i) {
         // Recupera o registro do jogador no índice atual
-        Jogador jogador = recuperar_registro_jogador(rrn_atual);
-        // Verifica se o registro é não excluído
+        Jogador jogador = recuperar_registro_jogador(i);
+        // Verifica se o registro é válido
         if (strcmp(jogador.id_jogador, "*") != 0) {
             // Reescreve o registro no arquivo de dados no RRN correspondente
             escrever_registro_jogador(jogador, rrn_atual);
             // Atualiza o índice com o novo RRN
             strcpy(jogadores_idx[rrn_atual].id_jogador, jogador.id_jogador);
             jogadores_idx[rrn_atual].rrn = rrn_atual;
-            rrn_atual++; // Incrementando o RRN para a próxima posição válida
+            rrn_atual++; // Incrementa o RRN para a próxima posição válida
         }
     }
-    // Atualizando o número de registros para o número de registros válidos
+    // Atualizando o número de registros para refletir apenas os válidos
     qtd_registros_jogadores = rrn_atual;
-    // Marcando o fim do arquivo com \0
+    // Marcando o fim do arquivo com \0 após o último registro válido
     ARQUIVO_JOGADORES[rrn_atual * TAM_REGISTRO_JOGADOR] = '\0';
-    // Reordena os índices pelo ID do jogador
+    // Reordenando os índices pelo Id do jogador
     qsort(jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx);
-    printf(SUCESSO); // Exibibindo a mensagem de sucesso
+    // Exibindo a mensagem de sucesso
+    printf(SUCESSO);
 }
-
 
 
 /* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande, menos trabalho rs*/
@@ -881,20 +849,22 @@ int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_ID
 
 /* Funções de busca binária */ // poxa, deu trabalho rs
 int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int posicao_caso_repetido, int retorno_se_nao_encontrado) {
+    // Variáveis utilizadas
     const char *base = (const char *)base0;
     size_t lim = nmemb;
     size_t meio;
     int cmp;
     size_t pos_inicial = 0;
 
-    // Exibindo registros percorridos 
+    // Exibindo registros percorridos
     if (exibir_caminho) {
-        printf("REGS_PERCORRIDOS ");
+        printf(REGS_PERCORRIDOS " ");
     }
     while (lim > 0) {
         meio = lim >> 1; // Calculando a mediana
         const void *p = base + meio * size;
         cmp = compar(key, p);
+
         // Exibindo índice atual no caminho
         if (exibir_caminho) {
             printf("%ld", pos_inicial + meio);
@@ -906,7 +876,7 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
         }
         if (cmp == 0) {
             int pos = pos_inicial + meio;
-            // Tratando as repetições 
+            // Tratando as repetições
             if (posicao_caso_repetido < 0) {
                 // Localizando a primeira ocorrência
                 while (pos > 0 && compar(key, base0 + (pos - 1) * size) == 0) {
@@ -920,29 +890,29 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
             }
             return pos;
         }
-        if (cmp > 0) {
-            // Movendo para a metade direita
+        if (cmp > 0) {// Movendo para a metade direita
             base += (meio + 1) * size;
             pos_inicial += meio + 1;
             lim -= meio + 1;
-        } else {
-            // Movendo para a metade esquerda
+        } else { // Movendo para a metade esquerda
             lim = meio;
         }
     }
-    // Quando a chave não encontrada
-    if (exibir_caminho) {
-        printf("\n"); 
+    if (exibir_caminho) {// Quando a chave não é encontrada
+        printf("\n");
     }
-    return retorno_se_nao_encontrado;
-} // utilizado como base: https://github.com/gcc-mirror/gcc/blob/master/libiberty/bsearch.c
+    if (retorno_se_nao_encontrado == -1) {
+        return (pos_inicial > 0) ? (pos_inicial - 1) : -1; // Retorna o antecessor
+    } else if (retorno_se_nao_encontrado == 1) {
+        return (pos_inicial < nmemb) ? pos_inicial : -1;  // Retorna o sucessor
+    }
+    return -1; // Retorno padrão NULL
+}
 
 /* Função de busca binária simples */
 int busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int retorno_se_nao_encontrado) {
     return busca_binaria_com_reps(key, base0, nmemb, size, compar, exibir_caminho, 0, retorno_se_nao_encontrado);
 }
-
-
 
 
 char *strpadright(char *str, char pad, unsigned size){
