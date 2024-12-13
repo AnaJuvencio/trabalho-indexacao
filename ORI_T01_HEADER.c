@@ -624,22 +624,30 @@ void listar_jogadores_id_menu() {
 			exibir_jogador(jogadores_idx[i].rrn);
 }
 
-/*utiliza busca binária?*/
-void listar_jogadores_kits_menu(char *kit) {
-
+/*Otimizando com lista invertida, a primeira versão foi sem ela*/
+void listar_jogadores_kits_menu(char *kit, inverted_list *lista_invertida) {
     bool encontrou = false;
+    int indice_secundario;
+    // Verificando se há registros de jogadores
     if (qtd_registros_jogadores == 0) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
     }
-    for (unsigned int i = 0; i < qtd_registros_jogadores; i++) {
-        // Recuperando o jogador pelo RRN
-        Jogador jogador = recuperar_registro_jogador(jogadores_idx[i].rrn);
-
-        // Itera pelos kits do jogador para verificar se possui o kit especificado
-        for (unsigned int j = 0; j < QTD_MAX_KITS; j++) {
-            if (strcmp(jogador.kits[j], kit) == 0) {
-                exibir_jogador(jogadores_idx[i].rrn);
+    // Buscando o kit no índice secundário
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, kit, lista_invertida);
+    if (!chave_encontrada) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+    // Recuperando todos os jogadores que possuem o kit
+    int indice_final;
+    char result[qtd_registros_jogadores][TAM_ID_JOGADOR];
+    int num_jogadores = inverted_list_primary_search(result, false, indice_secundario, &indice_final, lista_invertida);
+    // Exibindo os jogadores encontrados
+    for (int i = 0; i < num_jogadores; i++) {
+        for (unsigned int j = 0; j < qtd_registros_jogadores; j++) {
+            if (strcmp(jogadores_idx[j].id_jogador, result[i]) == 0) {
+                exibir_jogador(jogadores_idx[j].rrn);
                 encontrou = true;
                 break;
             }
