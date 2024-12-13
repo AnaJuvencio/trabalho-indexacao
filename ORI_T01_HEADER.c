@@ -839,10 +839,12 @@ void liberar_espaco_menu() {
 
 
 /* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande, menos trabalho rs*/
-void liberar_memoria_menu() {
-    //Array de ponteiros para os índices
-    void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx};
+void liberar_memoria_menu(inverted_list *lista_invertida) {
+    // Array de ponteiros para os índices
+    void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx,
+                       lista_invertida->jogador_kits_secundario_idx, lista_invertida->jogador_kits_primario_idx};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
+
     // Liberando cada índice
     for (int i = 0; i < num_indices; i++) {
         if (indices[i]) {
@@ -850,8 +852,9 @@ void liberar_memoria_menu() {
             indices[i] = NULL;
         }
     }
+
     printf("Memória liberada.\n");
-    exit(0); //Encerra o programa
+    exit(0); // Encerra o programa
 }
 
 
