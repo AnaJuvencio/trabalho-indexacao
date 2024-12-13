@@ -90,15 +90,17 @@ int qsort_info_jogador(const void *a, const void *b) {
 
 /* Função de comparação entre chaves do índice secundário de jogador_kits_secundario_idx */
 int qsort_jogador_kits_secundario_idx(const void *a, const void *b) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_jogador_kits_secundario_idx()");
+    jogador_kits_secundario_index *ia = (jogador_kits_secundario_index *)a;
+    jogador_kits_secundario_index *ib = (jogador_kits_secundario_index *)b;
+    return strcmp(ia->chave_secundaria, ib->chave_secundaria);
 }
 
 
 /* Função de comparação entre chaves do índice secundário de jogador_kits_primario_idx */
 int qsort_inverted_list_primary_search(const void *a, const void *b) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_inverted_list_primary_search()");
+    jogador_kits_primario_index *ia = (jogador_kits_primario_index *)a;
+    jogador_kits_primario_index *ib = (jogador_kits_primario_index *)b;
+    return strcmp(ia->chave_primaria, ib->chave_primaria);
 }
 
 
@@ -842,9 +844,8 @@ void liberar_espaco_menu() {
 void liberar_memoria_menu(inverted_list *lista_invertida) {
     // Array de ponteiros para os índices
     void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx,
-                       lista_invertida->jogador_kits_secundario_idx, lista_invertida->jogador_kits_primario_idx};
+    lista_invertida->jogador_kits_secundario_idx, lista_invertida->jogador_kits_primario_idx};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
-
     // Liberando cada índice
     for (int i = 0; i < num_indices; i++) {
         if (indices[i]) {
@@ -852,7 +853,6 @@ void liberar_memoria_menu(inverted_list *lista_invertida) {
             indices[i] = NULL;
         }
     }
-
     printf("Memória liberada.\n");
     exit(0); // Encerra o programa
 }
