@@ -246,10 +246,40 @@ void criar_data_idx() {
 }
 
 
+// Declaração de variável do tipo inverted_list
+inverted_list lista_invertida;
+
 void criar_jogador_kits_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_jogador_kits_idx()");
+
+    // Verificando e alocando memória para os índices primário e secundário
+    if ((!lista_invertida.jogador_kits_primario_idx && !(lista_invertida.jogador_kits_primario_idx = malloc(MAX_REGISTROS * sizeof(jogador_kits_primario_index)))) ||
+        (!lista_invertida.jogador_kits_secundario_idx && !(lista_invertida.jogador_kits_secundario_idx = malloc(MAX_REGISTROS * 10 * sizeof(jogador_kits_secundario_index))))) {
+        printf(ERRO_MEMORIA_INSUFICIENTE);
+        exit(1);
+    }
+    // Inicializando a estrutura da lista invertida
+    inverted_list_init(&lista_invertida);
+    // Percorrendo os registros de jogadores
+    for (unsigned i = 0; i < qtd_registros_jogadores; ++i) {
+        Jogador jogador = recuperar_registro_jogador(i);
+        // Inserindo cada kit válido na lista invertida
+        for (unsigned j = 0; j < 10 && jogador.kits[j][0] != '\0'; ++j) {
+            char kit_maiusculo[TAM_MAX_NOME_KIT];
+            strupr(strcpy(kit_maiusculo, jogador.kits[j]));
+            
+            // Inserção do kit no índice
+            inverted_list_insert(jogador.id_jogador, kit_maiusculo);
+        }
+    }
+    // Ordenando o índice secundário
+    qsort(lista_invertida.jogador_kits_secundario_idx, lista_invertida.qtd_registros_secundario, sizeof(jogador_kits_secundario_index), lista_invertida.compar);
+    // Mensagem de sucesso
+    printf(INDICE_CRIADO, "jogador_kits_idx");
 }
+
+
+
+
 
 
 /* Recupera do arquivo o registro com o RRN informado (já estava feito) --Ana
@@ -636,16 +666,15 @@ void listar_kits_compra_menu(char *id_jogador) {
     // Verificando os kits disponíveis no sistema
     for (int i = 0; i < qtd_registros_kits; i++) {
         Kit kit = recuperar_registro_kit(i);
-        // Verificando se o saldo do jogador é suficiente para comprar o kit
+        // Verificando se o saldo do jogador é o suficiente para comprar o kit
         if (jogador.saldo >= kit.preco) {
             if (!encontrou_kit) {
-                printf("Kits disponíveis para compra pelo jogador %s:\n", id_jogador);
                 encontrou_kit = true;
             }
-            printf("- %s (Preço: %.2f)\n", kit.nome, kit.preco);
+            // Imprimindo o kit 
+            imprimir_kit(&kit);
         }
     }
-
     // Caso nenhum kit esteja disponível
     if (!encontrou_kit) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
@@ -827,23 +856,100 @@ void liberar_memoria_menu() {
 
 
 
-/* Funções de manipulação de Lista Invertida */
-void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_insert()");
+void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) { int indice_secundario;
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, chave_secundaria, t);
+
+    if (!chave_encontrada) {
+        // Inserindo a chave secundária no índice secundário
+        strcpy(t->jogador_kits_secundario_idx[t->qtd_registros_secundario].chave_secundaria, chave_secundaria);
+        t->jogador_kits_secundario_idx[t->qtd_registros_secundario].primeiro_indice = t->qtd_registros_primario;
+        // Inserindo o jogador no índice primário
+        strcpy(t->jogador_kits_primario_idx[t->qtd_registros_primario].chave_primaria, chave_primaria);
+        t->jogador_kits_primario_idx[t->qtd_registros_primario].proximo_indice = -1;
+        // Incrementando as quantidades
+        t->qtd_registros_secundario++;
+        t->qtd_registros_primario++;
+        // Ordenando o índice secundário
+        qsort(t->jogador_kits_secundario_idx, t->qtd_registros_secundario, sizeof(jogador_kits_secundario_index), t->compar);
+    } else {
+        // Recuperando o índice final da lista encadeada
+        int indice_final;
+        inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
+        // Inserindo o novo jogador no índice primário
+        strcpy(t->jogador_kits_primario_idx[t->qtd_registros_primario].chave_primaria, chave_primaria);
+        t->jogador_kits_primario_idx[t->qtd_registros_primario].proximo_indice = -1;
+        // Atualizando o próximo índice do último jogador na lista encadeada
+        t->jogador_kits_primario_idx[indice_final].proximo_indice = t->qtd_registros_primario;
+        // Incrementando a quantidade
+        t->qtd_registros_primario++;
+    }
 }
 
 
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_secondary_search()");
+    int esquerda = 0;
+    int direita = t->qtd_registros_secundario - 1;
+    
+    while (esquerda <= direita) {
+        int meio = esquerda + (direita - esquerda) / 2;
+        int comparacao = t->compar(chave_secundaria, t->jogador_kits_secundario_idx[meio].chave_secundaria);
+        
+        if (comparacao == 0) {
+            *result = t->jogador_kits_secundario_idx[meio].primeiro_indice;
+            return true;
+        }
+        
+        if (comparacao < 0) {
+            direita = meio - 1;
+        } else {
+            esquerda = meio + 1;
+        }
+    }
+    
+    *result = NULL;
+    return false;
 }
 
 
 
 int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_primary_search()");
+    int num_chaves_encontradas = 0;
+
+    // Exibindo o caminho inicial
+    if (exibir_caminho) {
+        printf(" %d", indice);
+    }
+    // Recuperando o primeiro corredor
+    if (result != NULL) {
+        strcpy(result[num_chaves_encontradas], t->jogador_kits_primario_idx[indice].chave_primaria);
+    }
+    num_chaves_encontradas++;
+    // Atualizando o índice final
+    if (indice_final != NULL) {
+        *indice_final = indice;
+    }
+    // Percorrendo a lista encadeada
+    while (t->jogador_kits_primario_idx[indice].proximo_indice != -1) {
+        indice = t->jogador_kits_primario_idx[indice].proximo_indice;
+        // Exibir o caminho
+        if (exibir_caminho) {
+            printf(" %d", indice);
+        }
+        // Recuperando o corredor
+        if (result != NULL) {
+            strcpy(result[num_chaves_encontradas], t->jogador_kits_primario_idx[indice].chave_primaria);
+        }
+        num_chaves_encontradas++;
+        // Atualizando o índice final
+        if (indice_final != NULL) {
+            *indice_final = indice;
+        }
+    }
+    // Exibindo nova linha
+    if (exibir_caminho) {
+        printf("\n");
+    }
+    return num_chaves_encontradas;
 }
 
 
@@ -858,7 +964,7 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
 
     // Exibindo registros percorridos
     if (exibir_caminho) {
-        printf(REGS_PERCORRIDOS " ");
+        printf(REGS_PERCORRIDOS " + ");
     }
     while (lim > 0) {
         meio = lim >> 1; // Calculando a mediana
@@ -890,7 +996,7 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
             }
             return pos;
         }
-        if (cmp > 0) {// Movendo para a metade direita
+        if (cmp > 0) { // Movendo para a metade direita
             base += (meio + 1) * size;
             pos_inicial += meio + 1;
             lim -= meio + 1;
@@ -898,7 +1004,7 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
             lim = meio;
         }
     }
-    if (exibir_caminho) {// Quando a chave não é encontrada
+    if (exibir_caminho) { // Quando a chave não é encontrada
         printf("\n");
     }
     if (retorno_se_nao_encontrado == -1) {
