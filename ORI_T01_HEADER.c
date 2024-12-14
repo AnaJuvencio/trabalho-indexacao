@@ -165,7 +165,7 @@ void criar_partidas_idx() {
     // Inicializando o índice percorrendo todos os registros
     for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
         Partida p = recuperar_registro_partida(i); // Recupera o registro de partida pelo RRN
-        // Preenche o índice diretamente
+        // Preenchendo o índice
         strncpy(partidas_idx[i].id_partida, p.id_partida, TAM_ID_PARTIDA - 1);
         partidas_idx[i].id_partida[TAM_ID_PARTIDA - 1] = '\0'; // Garante terminação nula
         partidas_idx[i].rrn = i;
@@ -216,9 +216,9 @@ void criar_preco_kit_idx() {
     }
     // Preenchendo o índice com os dados
     for (unsigned i = 0; i < qtd_registros_kits; ++i) {
-        Kit k = recuperar_registro_kit(i); // Recupera o kit
+        Kit k = recuperar_registro_kit(i); // Recuperando o kit
         strcpy(preco_kit_idx[i].id_kit, k.id_kit);
-        preco_kit_idx[i].preco = k.preco; // Armazena o preço do kit
+        preco_kit_idx[i].preco = k.preco; // Armazenando o preço do kit
     }
     // Ordenando o índice pelo id_kit
     qsort(preco_kit_idx, qtd_registros_kits, sizeof(preco_kit_index), qsort_preco_kit_idx);
@@ -228,7 +228,7 @@ void criar_preco_kit_idx() {
 
 
 void criar_data_idx() {
-    if (!data_idx) // Verificamos se já existe, caso contrário, alocamos
+    if (!data_idx) // Verificando se já existe
         data_idx = malloc(MAX_REGISTROS * sizeof(data_index));
 
     if (!data_idx) {
@@ -242,7 +242,7 @@ void criar_data_idx() {
         strcpy(data_idx[i].id_partida, p.id_partida);
         strcpy(data_idx[i].inicio, p.inicio); // Armazena a data da partida
     }
-    // Ordenando o índice pelo id_partida
+    // Ordenando o índice pelo Id da partida
     qsort(data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx);
     printf(INDICE_CRIADO, "data_idx");
 }
@@ -252,7 +252,6 @@ void criar_data_idx() {
 inverted_list lista_invertida;
 
 void criar_jogador_kits_idx() {
-
     // Verificando e alocando memória para os índices primário e secundário
     if ((!lista_invertida.jogador_kits_primario_idx && !(lista_invertida.jogador_kits_primario_idx = malloc(MAX_REGISTROS * sizeof(jogador_kits_primario_index)))) ||
         (!lista_invertida.jogador_kits_secundario_idx && !(lista_invertida.jogador_kits_secundario_idx = malloc(MAX_REGISTROS * 10 * sizeof(jogador_kits_secundario_index))))) {
@@ -270,7 +269,7 @@ void criar_jogador_kits_idx() {
             strupr(strcpy(kit_maiusculo, jogador.kits[j]));
             
             // Inserção do kit no índice
-            inverted_list_insert(jogador.id_jogador, kit_maiusculo);
+            inverted_list_insert(kit_maiusculo, jogador.id_jogador, &lista_invertida);
         }
     }
     // Ordenando o índice secundário
@@ -278,10 +277,6 @@ void criar_jogador_kits_idx() {
     // Mensagem de sucesso
     printf(INDICE_CRIADO, "jogador_kits_idx");
 }
-
-
-
-
 
 
 /* Recupera do arquivo o registro com o RRN informado (já estava feito) --Ana
@@ -362,7 +357,7 @@ Partida recuperar_registro_partida(int rrn) {
     token = strtok(NULL, ";");
     strcpy(p.cenario, token);  
     token = strtok(NULL, ";");
-    strcpy(p.id_jogadores, token);  // Ids dos jogadores (separados por "|")
+    strcpy(p.id_jogadores, token);  // Ids dos jogadores separados por "|"
     return p;
 }
 
@@ -393,7 +388,7 @@ Resultado recuperar_registro_resultado(int rrn) {
 
 
 
-/* Escreve em seu respectivo arquivo na posição informada (RRN) */
+/* Escrevendo em seu arquivo na posição informada RRN */
 void escrever_registro_jogador(Jogador j, int rrn) {
 
 	char data[TAM_REGISTRO_JOGADOR + 1], number[100];
@@ -439,7 +434,7 @@ void escrever_registro_kit(Kit k, int rrn) {
     strcat(data, ";");
     // Preenchendo o restante com padding até TAM_REGISTRO
     strpadright(data, '#', TAM_REGISTRO_KIT);
-    // Escrevendo no arquivo na posição correspondente
+    // Escrevendo no arquivo na posição certa
     strncpy(ARQUIVO_KITS + rrn * TAM_REGISTRO_KIT, data, TAM_REGISTRO_KIT);
 }
 
@@ -461,7 +456,7 @@ void escrever_registro_partida(Partida p, int rrn) {
     strcat(data, ";");
     // Preenchendo o restante com padding até TAM_REGISTRO_PARTIDA
     strpadright(data, '#', TAM_REGISTRO_PARTIDA);
-    // Escrevendo no arquivo na posição correspondente
+    // Escrevendo no arquivo na posição certa
     strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
 
@@ -528,7 +523,7 @@ bool exibir_partida(int rrn) {
 /* Funções principais */
 void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
 
-    // Verificando se o Id já está no sistema
+    // Verificando se o Id está no sistema
     int indice = busca_binaria_com_reps(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
     if (indice != -1) {
         printf(ERRO_PK_REPETIDA, id_jogador);
@@ -557,7 +552,7 @@ void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
 
 void remover_jogador_menu(char *id_jogador) {
 
-    // Verificando se o Id já está no sistema
+    // Verificando se o Id está no sistema
     int indice = busca_binaria_com_reps(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
     if (indice == -1) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -579,15 +574,48 @@ void adicionar_saldo_menu(char *id_jogador, double valor) {
 }
 
 
-void adicionar_saldo(char *id_jogador, double valor, bool flag){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "adicionar_saldo()");
+void adicionar_saldo(char *id_jogador, double valor, bool flag) {
+
+    // Verificando se o Id está no sistema
+    int indice = busca_binaria_com_reps(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
+    if (indice == -1) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+    // Verificandi se o valor e valido
+    if (valor <= 0) {
+        printf(ERRO_VALOR_INVALIDO);
+        return;
+    }
+    // Recuperando o jogador com o RRN recuperado na busca binaria
+    Jogador jogador = recuperar_registro_jogador(jogadores_idx[indice].rrn);
+    // Adicionando o saldo
+    jogador.saldo += valor;
+    // Escrevendo o registro do jogador
+    escrever_registro_jogador(jogador, jogadores_idx[indice].rrn);
+    // Exibindo mensagem de sucesso se a flag for true
+    if (flag) {
+        printf(SUCESSO);
+    }
 }
 
 
 void cadastrar_kit_menu(char *nome, char *poder, double preco) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_kit_menu()");
+
+    // Criando um novo kit e preenchendo os dados
+    Kit novo_kit;
+    sprintf(novo_kit.id_kit, "%03d", qtd_registros_kits);
+    strcpy(novo_kit.nome, nome);
+    strcpy(novo_kit.poder, poder);
+    novo_kit.preco = preco;
+    // Escrevendo o novo registro do kit
+    escrever_registro_kit(novo_kit, qtd_registros_kits);
+    // Adicionando o novo kit no índice e ordenando
+    strcpy(kits_idx[qtd_registros_kits].id_kit, novo_kit.id_kit);
+    kits_idx[qtd_registros_kits].rrn = qtd_registros_kits;
+    qtd_registros_kits++;
+    qsort(kits_idx, qtd_registros_kits, sizeof(kits_index), qsort_kits_idx);
+    printf(SUCESSO); // Exibindo a mensagem de sucesso
 }
 
 
@@ -932,9 +960,9 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
 
 
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
+
     int esquerda = 0;
     int direita = t->qtd_registros_secundario - 1;
-    
     while (esquerda <= direita) {
         int meio = esquerda + (direita - esquerda) / 2;
         int comparacao = t->compar(chave_secundaria, t->jogador_kits_secundario_idx[meio].chave_secundaria);
@@ -950,7 +978,6 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
             esquerda = meio + 1;
         }
     }
-    
     *result = NULL;
     return false;
 }
@@ -959,7 +986,6 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
 
 int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
     int num_chaves_encontradas = 0;
-
     // Exibindo o caminho inicial
     if (exibir_caminho) {
         printf(" %d", indice);
