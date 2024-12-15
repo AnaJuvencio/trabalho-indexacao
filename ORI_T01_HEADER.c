@@ -629,7 +629,10 @@ void cadastrar_kit_menu(char *nome, char *poder, double preco) {
     // Adicionando o novo kit no índice e ordenando
     strcpy(kits_idx[qtd_registros_kits].id_kit, novo_kit.id_kit);
     kits_idx[qtd_registros_kits].rrn = qtd_registros_kits;
+    strcpy(preco_kit_idx[qtd_registros_kits].id_kit, novo_kit.id_kit);
+    preco_kit_idx[qtd_registros_kits].preco = novo_kit.preco;
     qtd_registros_kits++;
+    qsort(preco_kit_idx, qtd_registros_kits, sizeof(preco_kit_index), qsort_preco_kit_idx);
     qsort(kits_idx, qtd_registros_kits, sizeof(kits_index), qsort_kits_idx);
     printf(SUCESSO); // Exibindo a mensagem de sucesso
 }
@@ -681,7 +684,7 @@ void recompensar_vencedores_menu(char *data_inicio, char *data_fim, double premi
             info_jogadores[j].eliminacoes += resultado.eliminacoes;
             // Atualizando o tempo de sobrevivência - string
             int tempo_sobrevivencia = atoi(info_jogadores[j].sobrevivencia) + atoi(resultado.sobrevivencia);
-            sprintf(info_jogadores[j].sobrevivencia, "%08d", tempo_sobrevivencia);
+            sprintf(info_jogadores[j].sobrevivencia, "%06d", tempo_sobrevivencia);
             token = strtok(NULL, "|");
         }
     }
@@ -917,7 +920,7 @@ void imprimir_preco_kit_idx_menu() {
         printf(ERRO_ARQUIVO_VAZIO);
     else
         for (unsigned i = 0; i < qtd_registros_kits; ++i)
-            printf("%s, %.2f\n", preco_kit_idx[i].id_kit, preco_kit_idx[i].preco);
+            printf("%.2f, %s\n", preco_kit_idx[i].preco, preco_kit_idx[i].id_kit);
 }
 
 
@@ -998,7 +1001,7 @@ void liberar_memoria_menu() {
             indices[i] = NULL;
         }
     }
-    printf("Memória liberada.\n");
+    // printf("Memória liberada.\n");
     exit(0); // Encerra o programa
 }
 
@@ -1107,7 +1110,8 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
 
     // Exibindo registros percorridos
     if (exibir_caminho) {
-        printf(REGS_PERCORRIDOS + ' '); // Corrigindo o erro de saída
+        printf(REGS_PERCORRIDOS);
+        printf(" "); // Corrigindo o erro de saída
     }
     while (lim > 0) {
         meio = lim >> 1; // Calculando a mediana
