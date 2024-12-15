@@ -15,6 +15,8 @@
 /* ===========================================================================
  * ================================= FUNÇÕES ================================= */
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
+// Declaração de variável do tipo inverted_list
+inverted_list lista_invertida;
 
 /* Funções auxiliares para o qsort. */
 
@@ -83,8 +85,30 @@ int qsort_data_idx(const void *a, const void *b) {
 /* Função de comparação entre vitórias, eliminacoes e tempo de sobrevivencia dos jogadores
  * Usada na função recompensar_vencedores_periodo; */
 int qsort_info_jogador(const void *a, const void *b) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_info_jogador()");
+
+    Info_Jogador *jogador_a = (Info_Jogador *)a;
+    Info_Jogador *jogador_b = (Info_Jogador *)b;
+    // Comparando as vitorias
+    if (jogador_a->vitorias > jogador_b->vitorias) {
+        return -1;
+    } else if (jogador_a->vitorias < jogador_b->vitorias) {
+        return 1;
+    }
+    // Comparando as eliminações
+    if (jogador_a->eliminacoes > jogador_b->eliminacoes) {
+        return -1;
+    } else if (jogador_a->eliminacoes < jogador_b->eliminacoes) {
+        return 1;
+    }
+    // Comparando o tempo de sobrevivência
+    int cmp_sobrevivencia = strcmp(jogador_a->sobrevivencia, jogador_b->sobrevivencia);
+    if (cmp_sobrevivencia > 0) {
+        return -1;
+    } else if (cmp_sobrevivencia < 0) {
+        return 1;
+    }
+    // Comparando o Id do jogador
+    return strcmp(jogador_a->id_jogador, jogador_b->id_jogador);
 }
 
 
@@ -247,9 +271,15 @@ void criar_data_idx() {
     printf(INDICE_CRIADO, "data_idx");
 }
 
-
-// Declaração de variável do tipo inverted_list
-inverted_list lista_invertida;
+void inverted_list_init(inverted_list *lista) {
+    lista->jogador_kits_secundario_idx = NULL;
+    lista->jogador_kits_primario_idx = NULL;
+    lista->qtd_registros_secundario = 0;
+    lista->qtd_registros_primario = 0;
+    lista->tam_chave_secundaria = TAM_MAX_NOME_KIT;
+    lista->tam_chave_primaria = TAM_ID_JOGADOR;
+    lista->compar = qsort_jogador_kits_secundario_idx; // Ajuste conforme necessário
+}
 
 void criar_jogador_kits_idx() {
     // Verificando e alocando memória para os índices primário e secundário
@@ -505,7 +535,10 @@ bool exibir_kit(int rrn) {
     if (rrn < 0)
         return false;
     Kit k = recuperar_registro_kit(rrn);
-    imprimir_kit(k.id_kit, k.nome, k.poder, k.preco);
+    printf("ID Kit: %s\n", k.id_kit);
+    printf("Nome: %s\n", k.nome);
+    printf("Poder: %s\n", k.poder);
+    printf("Preço: %.2f\n", k.preco);
     return true;
 }
 
@@ -631,9 +664,55 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
 }
 
 
-void recompensar_vencedores_menu (char *data_inicio, char *data_fim, double premio) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recompensar_vencedores_menu()");
+void recompensar_vencedores_menu(char *data_inicio, char *data_fim, double premio) {
+
+    Info_Jogador info_jogadores[MAX_REGISTROS] = {0};
+    int qtd_jogadores = 0;
+    // Recuperando o RRN da primeira data que e igual ou maior que a data de início
+    int rrn_inicio = busca_binaria_com_reps(data_inicio, data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx, false, 0, 1);
+    for (int i = rrn_inicio; i < qtd_registros_partidas; i++) {
+        Partida partida = recuperar_registro_partida(partidas_idx[i].rrn);
+        // Verificando se a data está dentro do intervalo
+        if (strcmp(partida.inicio, data_fim) > 0) {
+            break;
+        }
+        // Recuperando as informações de cada jogador dentro da partida
+        char *token = strtok(partida.id_jogadores, "|");
+        while (token != NULL) {
+            // Recuperando o RRN do resultado
+            int rrn_resultado = busca_binaria_com_reps(token, resultados_idx, qtd_registros_resultados, sizeof(resultados_index), qsort_resultados_idx, false, 0, 0);
+            Resultado resultado = recuperar_registro_resultado(resultados_idx[rrn_resultado].rrn);
+            // Verificando se o jogador ja está na lista
+            int j;
+            for (j = 0; j < qtd_jogadores; j++) {
+                if (strcmp(info_jogadores[j].id_jogador, resultado.id_jogador) == 0) {
+                    break;
+                }
+            }
+            if (j == qtd_jogadores) { // Se não estive rna lista
+                strcpy(info_jogadores[qtd_jogadores].id_jogador, resultado.id_jogador);
+                qtd_jogadores++;
+            }
+            // Atualizando as infos do jogador
+            info_jogadores[j].vitorias += (resultado.colocacao == 1) ? 1 : 0;
+            info_jogadores[j].eliminacoes += resultado.eliminacoes;
+            // Atualizando o tempo de sobrevivência - string
+            int tempo_sobrevivencia = atoi(info_jogadores[j].sobrevivencia) + atoi(resultado.sobrevivencia);
+            sprintf(info_jogadores[j].sobrevivencia, "%08d", tempo_sobrevivencia);
+            token = strtok(NULL, "|");
+        }
+    }
+    // Ordenando o vetor info_Jogadores
+    qsort(info_jogadores, qtd_jogadores, sizeof(Info_Jogador), qsort_info_jogador);
+    // Recuperando o jogador pelo Id usando busca binária
+    int indice = busca_binaria_com_reps(info_jogadores[0].id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
+    if (indice == -1 || jogadores_idx[indice].rrn == -1) {
+        printf(ERRO_JOGADOR_REMOVIDO, premio, info_jogadores[0].id_jogador, info_jogadores[0].vitorias, info_jogadores[0].eliminacoes);
+    } else {
+        adicionar_saldo(info_jogadores[0].id_jogador, premio, false);
+        Jogador jogador = recuperar_registro_jogador(jogadores_idx[indice].rrn);
+        printf(CONCEDER_PREMIO, jogador.apelido, info_jogadores[0].vitorias, info_jogadores[0].eliminacoes, premio);
+    }
 }
 
 
@@ -688,7 +767,7 @@ void listar_jogadores_id_menu() {
 }
 
 /* Otimizando com lista invertida, a primeira versão foi sem */
-void listar_jogadores_kits_menu(char *kit, inverted_list *lista_invertida) {
+void listar_jogadores_kits_menu(char *kit) {
     bool encontrou = false;
     int indice_secundario;
     // Verificando se há registros de jogadores
@@ -697,15 +776,15 @@ void listar_jogadores_kits_menu(char *kit, inverted_list *lista_invertida) {
         return;
     }
     // Buscando o kit no índice secundário
-    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, kit, lista_invertida);
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, kit, &lista_invertida);
     if (!chave_encontrada) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
     }
     // Recuperando todos os jogadores que possuem o kit
     int indice_final;
-    char result[qtd_registros_jogadores][TAM_ID_JOGADOR];
-    int num_jogadores = inverted_list_primary_search(result, false, indice_secundario, &indice_final, lista_invertida);
+    char result[qtd_registros_jogadores][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX];
+    int num_jogadores = inverted_list_primary_search(result, false, indice_secundario, &indice_final, &lista_invertida);
     // Exibindo os jogadores encontrados
     for (int i = 0; i < num_jogadores; i++) {
         for (unsigned int j = 0; j < qtd_registros_jogadores; j++) {
@@ -911,10 +990,10 @@ void liberar_espaco_menu() {
 
 
 /* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande, menos trabalho rs*/
-void liberar_memoria_menu(inverted_list *lista_invertida) {
+void liberar_memoria_menu() {
     // Array de ponteiros para os índices
     void *indices[] = {jogadores_idx, kits_idx, partidas_idx, resultados_idx, preco_kit_idx, data_idx,
-    lista_invertida->jogador_kits_secundario_idx, lista_invertida->jogador_kits_primario_idx};
+                       lista_invertida.jogador_kits_secundario_idx, lista_invertida.jogador_kits_primario_idx};
     int num_indices = sizeof(indices) / sizeof(indices[0]);
     // Liberando cada índice
     for (int i = 0; i < num_indices; i++) {
@@ -960,7 +1039,6 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
 
 
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
-
     int esquerda = 0;
     int direita = t->qtd_registros_secundario - 1;
     while (esquerda <= direita) {
@@ -978,7 +1056,7 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
             esquerda = meio + 1;
         }
     }
-    *result = NULL;
+    *result = -1; // Usando -1 para indicar que a chave não foi encontrada
     return false;
 }
 
