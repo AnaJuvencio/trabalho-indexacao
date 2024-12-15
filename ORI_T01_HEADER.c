@@ -271,14 +271,14 @@ void criar_data_idx() {
     printf(INDICE_CRIADO, "data_idx");
 }
 
-void inverted_list_init(inverted_list *lista) {
+void inverted_list_init(inverted_list *lista) { // Função de inicira a lista invertida
     lista->jogador_kits_secundario_idx = NULL;
     lista->jogador_kits_primario_idx = NULL;
     lista->qtd_registros_secundario = 0;
     lista->qtd_registros_primario = 0;
     lista->tam_chave_secundaria = TAM_MAX_NOME_KIT;
     lista->tam_chave_primaria = TAM_ID_JOGADOR;
-    lista->compar = qsort_jogador_kits_secundario_idx; // Ajuste conforme necessário
+    lista->compar = qsort_jogador_kits_secundario_idx; // Será isso mesmo?
 }
 
 void criar_jogador_kits_idx() {
