@@ -15,11 +15,11 @@
 /* ===========================================================================
  * ================================= FUNÇÕES ================================= */
 /* <<< COLOQUE AQUI OS DEMAIS PROTÓTIPOS DE FUNÇÕES, SE NECESSÁRIO >>> */
+
 // Declaração de variável do tipo inverted_list
 inverted_list lista_invertida;
 
 /* Funções auxiliares para o qsort. */
-
 /* Função de comparação entre chaves do índice jogadores_idx */
 int qsort_jogadores_idx(const void *a, const void *b) {
 	return strcmp (((jogadores_index*)a)->id_jogador, ((jogadores_index*)b)->id_jogador);
@@ -271,7 +271,7 @@ void criar_data_idx() {
     printf(INDICE_CRIADO, "data_idx");
 }
 
-void inverted_list_init(inverted_list *lista) { // Função de inicira a lista invertida
+void lista_inv_inicia(inverted_list *lista) { // Função de inicir a lista invertida
     lista->jogador_kits_secundario_idx = NULL;
     lista->jogador_kits_primario_idx = NULL;
     lista->qtd_registros_secundario = 0;
@@ -289,7 +289,7 @@ void criar_jogador_kits_idx() {
         exit(1);
     }
     // Inicializando a estrutura da lista invertida
-    inverted_list_init(&lista_invertida);
+    lista_inv_inicia(&lista_invertida);
     // Percorrendo os registros de jogadores
     for (unsigned i = 0; i < qtd_registros_jogadores; ++i) {
         Jogador jogador = recuperar_registro_jogador(i);
