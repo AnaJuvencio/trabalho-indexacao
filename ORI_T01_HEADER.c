@@ -948,14 +948,27 @@ void imprimir_data_idx_menu() {
 
 
 void imprimir_jogador_kits_secundario_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_jogador_kits_secundario_idx_menu()");
+    if (lista_invertida.jogador_kits_secundario_idx == NULL || lista_invertida.qtd_registros_secundario == 0) {
+        printf(ERRO_ARQUIVO_VAZIO);
+    } else {
+        for (unsigned i = 0; i < lista_invertida.qtd_registros_secundario; ++i) {
+            printf("%s, %d\n",
+                   lista_invertida.jogador_kits_secundario_idx[i].chave_secundaria,
+                   lista_invertida.jogador_kits_secundario_idx[i].primeiro_indice);
+        }
+    }
 }
 
-
 void imprimir_jogador_kits_primario_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_jogador_kits_primario_idx_menu()");
+    if (lista_invertida.jogador_kits_primario_idx == NULL || lista_invertida.qtd_registros_primario == 0) {
+        printf(ERRO_ARQUIVO_VAZIO);
+    } else {
+        for (unsigned i = 0; i < lista_invertida.qtd_registros_primario; ++i) {
+            printf("%s, %d\n",
+                   lista_invertida.jogador_kits_primario_idx[i].chave_primaria,
+                   lista_invertida.jogador_kits_primario_idx[i].proximo_indice);
+        }
+    }
 }
 
 
