@@ -72,7 +72,7 @@ int qsort_data_idx(const void *a, const void *b) {
 
     // Comparação pela data
     int cmp = strcmp(data_a->inicio, data_b->inicio);
-    if (cmp != 0)
+    if (cmp != 0 || (cmp==0 && data_a->id_partida[0] == '\0'))
         return cmp;
 
     // Comparação pelo ID da partida (desempate)
@@ -120,9 +120,7 @@ int qsort_jogador_kits_secundario_idx(const void *a, const void *b) {
 
 /* Função de comparação entre chaves do índice secundário de jogador_kits_primario_idx */
 int qsort_inverted_list_primary_search(const void *a, const void *b) {
-    jogador_kits_primario_index *ia = (jogador_kits_primario_index *)a;
-    jogador_kits_primario_index *ib = (jogador_kits_primario_index *)b;
-    return strcmp(ia->chave_primaria, ib->chave_primaria);
+    return strcmp((char*)a, (char*)b);
 }
 
 
@@ -361,7 +359,7 @@ Kit recuperar_registro_kit(int rrn) {
 Partida recuperar_registro_partida(int rrn) {
 
     Partida p;
-    char data[TAM_REGISTRO_PARTIDA + 1], *token;
+    char data[TAM_REGISTRO_PARTIDA + 1];
     // Copiando o registro do arquivo com base no RRN
     strncpy(data, ARQUIVO_PARTIDAS + (rrn * TAM_REGISTRO_PARTIDA), TAM_REGISTRO_PARTIDA);
     data[TAM_REGISTRO_PARTIDA] = '\0'; // Garante terminação nula
@@ -399,7 +397,7 @@ Partida recuperar_registro_partida(int rrn) {
 Resultado recuperar_registro_resultado(int rrn) {
 
     Resultado r;
-    char data[TAM_REGISTRO_RESULTADO + 1], *p;
+    char data[TAM_REGISTRO_RESULTADO + 1];
     // Copiando os dados do registro de resultado do arquivo para a variável data
     strncpy(data, ARQUIVO_RESULTADOS + (rrn * TAM_REGISTRO_RESULTADO), TAM_REGISTRO_RESULTADO);
     data[TAM_REGISTRO_RESULTADO] = '\0'; // Garante terminação nula
@@ -414,7 +412,11 @@ Resultado recuperar_registro_resultado(int rrn) {
     strncpy(r.id_kit, data+19, 3);
     r.id_kit[3] = '\0';
 
-    r.colocacao = atoi(data+22);
+    char number[TAM_INT_NUMBER];
+    strncpy(number, data+22, TAM_INT_NUMBER-1);
+    number[TAM_INT_NUMBER] = '\0';
+
+    r.colocacao = atoi(number);
 
     strncpy(r.sobrevivencia, data+26, 6);
     r.sobrevivencia[6] = '\0';
@@ -561,7 +563,7 @@ bool exibir_partida(int rrn) {
 void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
 
     // Verificando se o Id está no sistema
-    int indice = busca_binaria_com_reps(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
+    int indice = busca_binaria(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, 0, 0);
     if (indice != -1) {
         printf(ERRO_PK_REPETIDA, id_jogador);
         return;
@@ -571,8 +573,9 @@ void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
     strcpy(novo_jogador.id_jogador, id_jogador);
     strcpy(novo_jogador.apelido, apelido);
     current_datetime(novo_jogador.cadastro);
-    strpadright(novo_jogador.premio, '0', TAM_DATETIME);
-    novo_jogador.premio[TAM_DATETIME] = '\0';
+    sprintf(novo_jogador.premio, "%012d", 0);
+    // strpadright(novo_jogador.premio, '0', TAM_DATETIME);
+    // novo_jogador.premio[TAM_DATETIME] = '\0';
     novo_jogador.saldo = 0;
     for (int i = 0; i < QTD_MAX_KITS; i++) {
         novo_jogador.kits[i][0] = '\0';
@@ -602,6 +605,7 @@ void remover_jogador_menu(char *id_jogador) {
     escrever_registro_jogador(jogador, jogadores_idx[indice].rrn);
     // Marcando o RRN com -1
     jogadores_idx[indice].rrn = -1;
+
     printf(SUCESSO); // Exibindo mensagem de sucesso
 }
 
@@ -615,7 +619,7 @@ void adicionar_saldo(char *id_jogador, double valor, bool flag) {
 
     // Verificando se o Id está no sistema
     int indice = busca_binaria_com_reps(id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
-    if (jogadores_idx[indice].rrn == -1) {
+    if (indice == -1 || jogadores_idx[indice].rrn == -1) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
@@ -681,8 +685,6 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
         printf(ERRO_SALDO_NAO_SUFICIENTE);
         return;
     }
-    printf("jogador= %s\n", jogador.apelido);
-    printf("kit= %s\n", kit.nome);
     // Verificandp se o jogador já possui o kit
     for (int i = 0; i < QTD_MAX_KITS; i++) {
         if (strcmp(jogador.kits[i], id_kit) == 0) { //
@@ -790,51 +792,95 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
 
 void recompensar_vencedores_menu(char *data_inicio, char *data_fim, double premio) {
 
-    Info_Jogador info_jogadores[MAX_REGISTROS] = {0};
+    Info_Jogador info_jogadores[MAX_REGISTROS];
     int qtd_jogadores = 0;
+
+
+
     // Recuperando o RRN da primeira data que e igual ou maior que a data de início
-    int rrn_inicio = busca_binaria_com_reps(data_inicio, data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx, false, 0, 1);
+    int rrn_inicio = busca_binaria(data_inicio, data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx, 0, 1);
+
+
     for (int i = rrn_inicio; i < qtd_registros_partidas; i++) {
-        Partida partida = recuperar_registro_partida(partidas_idx[i].rrn);
+        int rrn_partida = busca_binaria(data_idx[i].id_partida, partidas_idx, qtd_registros_partidas, sizeof(partidas_index), qsort_partidas_idx, 0, 0);
+        Partida partida = recuperar_registro_partida(partidas_idx[rrn_partida].rrn);
+
         // Verificando se a data está dentro do intervalo
-        if (strcmp(partida.inicio, data_fim) > 0) {
+        if (strcmp(partida.inicio, data_fim) >= 0) {
             break;
         }
         // Recuperando as informações de cada jogador dentro da partida
-        char *token = strtok(partida.id_jogadores, "|");
-        while (token != NULL) {
-            // Recuperando o RRN do resultado
-            int rrn_resultado = busca_binaria_com_reps(token, resultados_idx, qtd_registros_resultados, sizeof(resultados_index), qsort_resultados_idx, false, 0, 0);
-            Resultado resultado = recuperar_registro_resultado(resultados_idx[rrn_resultado].rrn);
-            // Verificando se o jogador ja está na lista
-            int j;
-            for (j = 0; j < qtd_jogadores; j++) {
-                if (strcmp(info_jogadores[j].id_jogador, resultado.id_jogador) == 0) {
+        for (int j = 0; j < QTD_MAX_JOGADORES; j++) {
+            char id_jogador[TAM_ID_JOGADOR];
+            strncpy(id_jogador, partida.id_jogadores + j * (TAM_ID_JOGADOR-1), TAM_ID_JOGADOR-1);
+            id_jogador[TAM_ID_JOGADOR-1] = '\0';
+
+            resultados_index a;
+
+            strcpy(a.id_jogador, id_jogador);
+            strcpy(a.id_partida, partida.id_partida);
+
+
+            // recuperando o resultado existente
+            int indice_resultado = busca_binaria(&a, resultados_idx, qtd_registros_resultados, sizeof(resultados_index), qsort_resultados_idx, 0, 0);// Busca binária
+            
+            Resultado resultado = recuperar_registro_resultado(resultados_idx[indice_resultado].rrn); // Recuperando o resultado da partida
+            
+            // verificar se o jogador ta na lista
+            for(int k=0; k <= qtd_jogadores; k++) {
+                // novo jogador
+                if(k==qtd_jogadores) {
+                    strcpy(info_jogadores[qtd_jogadores].id_jogador, resultado.id_jogador);
+                    if(resultado.colocacao == 1) info_jogadores[qtd_jogadores].vitorias = 1;
+                    info_jogadores[qtd_jogadores].eliminacoes = resultado.eliminacoes;
+                    strcpy(info_jogadores[qtd_jogadores].sobrevivencia, resultado.sobrevivencia);
+
+                    qtd_jogadores++;
+                    break;
+                }
+                // encontrou jogador na lista
+                if (strcmp(info_jogadores[k].id_jogador, resultado.id_jogador) == 0) {
+                    if(resultado.colocacao == 1) info_jogadores[k].vitorias++;
+                    info_jogadores[k].eliminacoes += resultado.eliminacoes;
+                    
+                    int tempo_sobrevivencia = atoi(info_jogadores[k].sobrevivencia) + atoi(resultado.sobrevivencia);
+                    sprintf(info_jogadores[k].sobrevivencia, "%06d", tempo_sobrevivencia);
+
+                    qtd_jogadores++;
                     break;
                 }
             }
-            if (j == qtd_jogadores) { // Se não estive rna lista
-                strcpy(info_jogadores[qtd_jogadores].id_jogador, resultado.id_jogador);
-                qtd_jogadores++;
-            }
-            // Atualizando as infos do jogador
-            info_jogadores[j].vitorias += (resultado.colocacao == 1) ? 1 : 0;
-            info_jogadores[j].eliminacoes += resultado.eliminacoes;
-            // Atualizando o tempo de sobrevivência - string
-            int tempo_sobrevivencia = atoi(info_jogadores[j].sobrevivencia) + atoi(resultado.sobrevivencia);
-            sprintf(info_jogadores[j].sobrevivencia, "%06d", tempo_sobrevivencia);
-            token = strtok(NULL, "|");
         }
     }
+
     // Ordenando o vetor info_Jogadores
     qsort(info_jogadores, qtd_jogadores, sizeof(Info_Jogador), qsort_info_jogador);
+
     // Recuperando o jogador pelo Id usando busca binária
     int indice = busca_binaria_com_reps(info_jogadores[0].id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
     if (indice == -1 || jogadores_idx[indice].rrn == -1) {
-        printf(ERRO_JOGADOR_REMOVIDO, premio, info_jogadores[0].id_jogador, info_jogadores[0].vitorias, info_jogadores[0].eliminacoes);
+
+        int indice_ganhador = 0;
+        for(int i=1; i < qtd_jogadores; i++) {
+            indice = busca_binaria_com_reps(info_jogadores[i].id_jogador, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0, 0);
+
+            // checa se o jogador pode receber o prêmio
+            if(jogadores_idx[indice].rrn != -1) {
+                indice_ganhador = i;
+                break;
+            }
+        }
+
+        adicionar_saldo(info_jogadores[indice_ganhador].id_jogador, premio, false);
+        Jogador jogador = recuperar_registro_jogador(jogadores_idx[indice].rrn);
+        strcpy(jogador.premio, data_fim);
+        escrever_registro_jogador(jogador, jogadores_idx[indice].rrn);
+        printf(ERRO_JOGADOR_REMOVIDO, premio, jogador.apelido, info_jogadores[indice_ganhador].vitorias, info_jogadores[indice_ganhador].eliminacoes);
     } else {
         adicionar_saldo(info_jogadores[0].id_jogador, premio, false);
         Jogador jogador = recuperar_registro_jogador(jogadores_idx[indice].rrn);
+        strcpy(jogador.premio, data_fim);
+        escrever_registro_jogador(jogador, jogadores_idx[indice].rrn);
         printf(CONCEDER_PREMIO, jogador.apelido, info_jogadores[0].vitorias, info_jogadores[0].eliminacoes, premio);
     }
 }
@@ -908,9 +954,17 @@ void listar_jogadores_kits_menu(char *kit) {
     int indice_final;
     char result[qtd_registros_jogadores][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX];
     int num_jogadores = inverted_list_primary_search(result, true, indice_secundario, &indice_final, &jogador_kits_idx);
+
+    qsort(result, num_jogadores, jogador_kits_idx.tam_chave_primaria, qsort_inverted_list_primary_search);
+
+
     // Exibindo os jogadores encontrados
     for (int i = 0; i < num_jogadores; i++) {
-        exibir_jogador(jogadores_idx[ busca_binaria(result[i], jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, 0, 0) ].rrn);
+        char chave[TAM_ID_JOGADOR];
+        strncpy(chave, result[i], TAM_ID_JOGADOR-1);
+        chave[TAM_ID_JOGADOR] = '\0';
+        int rrn_jogador = busca_binaria(chave, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, 0, 0);
+        exibir_jogador(jogadores_idx[ rrn_jogador ].rrn);
     }
     if (num_jogadores == 0) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
@@ -925,7 +979,7 @@ void listar_kits_compra_menu(char *id_jogador) {
     jogadores_index index;
     strcpy(index.id_jogador, id_jogador);
     posicao = busca_binaria((void*)&index, jogadores_idx, qtd_registros_jogadores, sizeof(jogadores_index), qsort_jogadores_idx, false, 0);
-    if (posicao == -1) {
+    if (posicao == -1 || jogadores_idx[posicao].rrn == -1) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
@@ -934,16 +988,27 @@ void listar_kits_compra_menu(char *id_jogador) {
     bool encontrou_kit = false;
     // Verificando os kits disponíveis no sistema
     for (int i = 0; i < qtd_registros_kits; i++) {
-        Kit kit = recuperar_registro_kit(i);
-        // Verificando se o saldo do jogador é suficiente para comprar o kit
-        if (jogador.saldo >= kit.preco) {
-            if (!encontrou_kit) {
-                // printf("Kits disponíveis para compra pelo jogador %s:\n", id_jogador);
-                encontrou_kit = true;
-            }
-            exibir_kit(i);
-            // printf("- %s (Preço: %.2f)\n", kit.nome, kit.preco);
+
+        if(jogador.saldo < preco_kit_idx[i].preco) {
+            break;
         }
+
+        encontrou_kit = true;
+
+        int rrn_kit = busca_binaria(preco_kit_idx[i].id_kit, kits_idx, qtd_registros_kits, sizeof(kits_index), qsort_kits_idx, 0, 0);
+        exibir_kit(rrn_kit);
+
+
+        // Kit kit = recuperar_registro_kit(i);
+        // // Verificando se o saldo do jogador é suficiente para comprar o kit
+        // if (jogador.saldo >= kit.preco) {
+        //     if (!encontrou_kit) {
+        //         // printf("Kits disponíveis para compra pelo jogador %s:\n", id_jogador);
+        //         encontrou_kit = true;
+        //     }
+        //     exibir_kit(i);
+        //     // printf("- %s (Preço: %.2f)\n", kit.nome, kit.preco);
+        // }
     }
     // Caso nenhum kit esteja disponível
     if (!encontrou_kit) {
@@ -960,14 +1025,21 @@ void listar_partidas_periodo_menu(char *data_inicio, char *data_fim) {
         return;
     }
 
-    int rrn_inicio = busca_binaria_com_reps(data_inicio, data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx, true, 0, 1);
+    data_index a;
+    strcpy(a.inicio, data_inicio);
+    a.id_partida[0] = '\0';
+
+    int rrn_inicio = busca_binaria(&a, data_idx, qtd_registros_partidas, sizeof(data_index), qsort_data_idx, true, 1);
     
-    for (unsigned int i = 0; i < qtd_registros_partidas; i++) {
+    for (unsigned int i = rrn_inicio; i < qtd_registros_partidas; i++) {
+
         // Recuperando a partida pelo RRN
-        Partida partida = recuperar_registro_partida(partidas_idx[i].rrn);
+        int rrn_partida = busca_binaria(data_idx[i].id_partida, partidas_idx, qtd_registros_partidas, sizeof(partidas_index), qsort_partidas_idx, 0, 0);
+        Partida partida = recuperar_registro_partida(partidas_idx[rrn_partida].rrn);
+        
         // Verificando se a data esta dentro do intervalo especificado
         if (strcmp(partida.inicio, data_inicio) >= 0 && strcmp(partida.inicio, data_fim) <= 0) {
-            exibir_partida(partidas_idx[i].rrn);
+            exibir_partida(rrn_partida);
             encontrou = true;
         }
     }
@@ -1064,7 +1136,7 @@ void imprimir_data_idx_menu() {
         printf(ERRO_ARQUIVO_VAZIO);
     else
         for (unsigned i = 0; i < qtd_registros_partidas; ++i)
-            printf("%s, %s\n", data_idx[i].inicio, data_idx[i].id_partida);
+            printf("%s, %s\n", data_idx[i].id_partida, data_idx[i].inicio);
 }
 
 
@@ -1094,7 +1166,6 @@ void imprimir_jogador_kits_primario_idx_menu() {
 
 
 /* Liberar espaço */
-
 // A primeira ideia era criar um buffer
 // Mas essa função tem um menor uso de memória, pq evita a criação de buffers desnecessários
 void liberar_espaco_menu() {
@@ -1121,6 +1192,7 @@ void liberar_espaco_menu() {
     // Exibindo a mensagem de sucesso
     printf(SUCESSO);
 }
+
 
 
 /* Liberar memória e encerrar programa com array, foi oq eu pensei para não ficar uma função muito grande, menos trabalho rs*/
@@ -1156,7 +1228,7 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
         t->qtd_registros_secundario++;
         t->qtd_registros_primario++;
         // Ordenando o índice secundário
-        // qsort(t->jogador_kits_secundario_idx, t->qtd_registros_secundario, sizeof(t->tam_chave_secundaria), qsort_jogador_kits_secundario_idx);
+        qsort(t->jogador_kits_secundario_idx, t->qtd_registros_secundario, sizeof(jogador_kits_secundario_index), qsort_jogador_kits_secundario_idx);
     } else {
         // Recuperando o índice final da lista encadeada
         int indice_final;
@@ -1255,7 +1327,7 @@ int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, siz
             printf("%ld", pos_inicial + meio);
             if (cmp == 0) {
                 printf("\n"); // Último valor do caminho
-            } else {
+            } else if (lim > 1) {
                 printf(" "); // Espaço entre índices
             }
         }
