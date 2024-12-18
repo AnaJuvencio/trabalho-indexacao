@@ -1,0 +1,56 @@
+Indice jogadores_idx criado com sucesso!
+Indice kits_idx criado com sucesso!
+Indice partidas_idx criado com sucesso!
+Indice resultados_idx criado com sucesso!
+Indice preco_kit_idx criado com sucesso!
+Indice jogador_kits_idx criado com sucesso!
+Indice data_partida_idx criado com sucesso!
+INSERT INTO jogadores VALUES ('91230842311', 'Felps');
+OK
+INSERT INTO jogadores VALUES ('83920491234', 'Goularte');
+OK
+INSERT INTO jogadores VALUES ('91004621999', 'Ludwig');
+OK
+INSERT INTO jogadores VALUES ('91230562845', 'Raora');
+OK
+INSERT INTO jogadores VALUES ('83920564723', 'LReporta');
+OK
+INSERT INTO kits VALUES ('Kit Basico', 'Nada de especial', 0);
+OK
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+OK
+INSERT INTO kits VALUES ('RBD', 'Ao morrer, permite voltar 10s antes de sua morte', 3899);
+OK
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+OK
+DELETE FROM jogadores WHERE id_jogador = '83920564723';
+OK
+UPDATE jogadores SET saldo = saldo + 1721 WHERE id_jogador = '91004621999';
+OK
+UPDATE jogadores SET saldo = saldo + 6400 WHERE id_jogador = '91230842311';
+OK
+UPDATE jogadores SET saldo = saldo + 1450 WHERE id_jogador = '91230842311';
+OK
+UPDATE jogadores SET saldo = saldo + 1530 WHERE id_jogador = '83920564723';
+ERRO: Registro nao encontrado
+UPDATE jogadores SET kits = array_append(kits, '001') WHERE id_jogador = '91004621999';
+OK
+UPDATE jogadores SET kits = array_append(kits, '002') WHERE id_jogador = '91230842311';
+OK
+UPDATE jogadores SET kits = array_append(kits, '001') WHERE id_jogador = '91230842311';
+OK
+UPDATE jogadores SET kits = array_append(kits, '010') WHERE id_jogador = '83920564723';
+ERRO: Registro nao encontrado
+\echo file ARQUIVO_JOGADORES
+91230842311;Felps;202103181430;000000000000;0000002464.00;002|001;######################################################################83920491234;Goularte;202103260628;000000000000;0000000000.00;;##########################################################################91004621999;Ludwig;202104041659;000000000000;0000000234.00;001;#########################################################################91230562845;Raora;202104070013;000000000000;0000000000.00;;#############################################################################*|920564723;LReporta;202104150517;000000000000;0000000000.00;;##########################################################################
+\echo file ARQUIVO_KITS
+000;Kit Basico;Nada de especial;0000000000.00;######################################################001;Kangaroo;Foguete que permite salto duplo;0000001487.00;#########################################002;RBD;Ao morrer, permite voltar 10s antes de sua morte;0000003899.00;#############################003;Viper;Atinge o inimigo com veneno;0000002579.00;################################################
+\echo index jogadores_idx
+001839204912340001###############T*********002912305628450003912308423110000T*********001910046219990002###############F000001***
+\echo index kits_idx
+0010000000#######T*********00200200020030003T*********0010010001#######F000001***
+\echo index jogador_kits_secundario_idx
+KANGAROO############0000RBD#################0001
+\echo index jogador_kits_primario_idx
+91004621999000291230842311-00191230842311-001
+\q

@@ -1,0 +1,112 @@
+Indice jogadores_idx criado com sucesso!
+Indice kits_idx criado com sucesso!
+Indice partidas_idx criado com sucesso!
+Indice resultados_idx criado com sucesso!
+Indice preco_kit_idx criado com sucesso!
+Indice jogador_kits_idx criado com sucesso!
+Indice data_partida_idx criado com sucesso!
+INSERT INTO jogadores VALUES ('93804621236', 'davigamer');
+OK
+INSERT INTO jogadores VALUES ('57653993524', 'Philza');
+OK
+INSERT INTO jogadores VALUES ('59932519774', 'BRKsEDU ');
+OK
+INSERT INTO jogadores VALUES ('93804621236', 'Zephyre');
+ERRO: Ja existe um registro com a chave 93804621236
+INSERT INTO jogadores VALUES ('51004621955', 'El grande padre');
+OK
+INSERT INTO jogadores VALUES ('72839562301', 'Reinhard');
+OK
+INSERT INTO jogadores VALUES ('83920564723', 'REM');
+OK
+INSERT INTO jogadores VALUES ('91230562845', 'Emilia');
+OK
+INSERT INTO jogadores VALUES ('67392034567', 'Cellbit');
+OK
+INSERT INTO jogadores VALUES ('59320481235', 'Technoblade');
+OK
+INSERT INTO jogadores VALUES ('83920491234', 'Subaru');
+OK
+INSERT INTO jogadores VALUES ('72849561234', 'Luizerah');
+OK
+INSERT INTO jogadores VALUES ('57209482376', 'CaptainSparklez');
+OK
+INSERT INTO jogadores VALUES ('91230842311', 'Mumbo Jumbo');
+OK
+INSERT INTO jogadores VALUES ('81234567891', 'viniccius13');
+OK
+INSERT INTO kits VALUES ('Kit Basico', 'Nada de especial', 0);
+OK
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+OK
+INSERT INTO kits VALUES ('Stomper', 'Causa dano ao cair sobre o inimigo', 2232);
+OK
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+OK
+INSERT INTO kits VALUES ('RBD', 'Ao morrer, permite voltar 10s antes de sua morte', 3899);
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '93804621236';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '57653993524';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '59932519774';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '51004621955';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '72839562301';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '83920564723';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '91230562845';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '67392034567';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '59320481235';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '83920491234';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '72849561234';
+OK
+UPDATE jogadores SET kits = array_append(kits, '000') WHERE id_jogador = '57209482376';
+OK
+INSERT INTO partidas VALUES ('202411142120', '212045', '0001', '938046212365765399352459932519774510046219557283956230183920564723912305628456739203456759320481235839204912347284956123457209482376', '000000000000000000000000000000000000', '022035021512020710015753014430013322011532011054010122005110004120002310', '001100000000000000000000000000000000000000000000');
+OK
+SELECT * FROM jogadores WHERE id_jogador = '57653993524';
+Registros percorridos: 6 (1 0) 2 (0)
+57653993524, Philza, 202103260628, 000000000000, 0.00
+SELECT * FROM jogadores WHERE id_jogador = '72428989929';
+Registros percorridos: 6 (1 0) 5 (1 0) 1 (0)
+ERRO: Registro nao encontrado
+SELECT * FROM partidas WHERE id_partida = '00000000';
+Registros percorridos: 0 (0)
+00000000, 202411142120, 212045, 0001, 938046212365765399352459932519774510046219557283956230183920564723912305628456739203456759320481235839204912347284956123457209482376
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+51004621955, El grande padre, 202104150517, 000000000000, 0.00
+57209482376, CaptainSparklez, 202106041528, 000000000000, 0.00
+57653993524, Philza, 202103260628, 000000000000, 0.00
+59320481235, Technoblade, 202105181037, 000000000000, 0.00
+59932519774, BRKsEDU , 202104041659, 000000000000, 0.00
+67392034567, Cellbit, 202105180844, 000000000000, 0.00
+72839562301, Reinhard, 202104231820, 000000000000, 0.00
+72849561234, Luizerah, 202105291608, 000000000000, 0.00
+81234567891, viniccius13, 202106132206, 000000000000, 0.00
+83920491234, Subaru, 202105271846, 000000000000, 0.00
+83920564723, REM, 202105011620, 000000000000, 0.00
+91230562845, Emilia, 202105082153, 000000000000, 0.00
+91230842311, Mumbo Jumbo, 202106061703, 000000000000, 0.00
+93804621236, davigamer, 202103181430, 000000000000, 0.00
+\echo file ARQUIVO_JOGADORES
+93804621236;davigamer;202103181430;000000000000;0000000000.00;000;######################################################################57653993524;Philza;202103260628;000000000000;0000000000.00;000;#########################################################################59932519774;BRKsEDU ;202104041659;000000000000;0000000000.00;000;#######################################################################51004621955;El grande padre;202104150517;000000000000;0000000000.00;000;################################################################72839562301;Reinhard;202104231820;000000000000;0000000000.00;000;#######################################################################83920564723;REM;202105011620;000000000000;0000000000.00;000;############################################################################91230562845;Emilia;202105082153;000000000000;0000000000.00;000;#########################################################################67392034567;Cellbit;202105180844;000000000000;0000000000.00;000;########################################################################59320481235;Technoblade;202105181037;000000000000;0000000000.00;000;####################################################################83920491234;Subaru;202105271846;000000000000;0000000000.00;000;#########################################################################72849561234;Luizerah;202105291608;000000000000;0000000000.00;000;#######################################################################57209482376;CaptainSparklez;202106041528;000000000000;0000000000.00;000;################################################################91230842311;Mumbo Jumbo;202106061703;000000000000;0000000000.00;;#######################################################################81234567891;viniccius13;202106132206;000000000000;0000000000.00;;#######################################################################
+\echo index jogadores_idx
+002510046219550003572094823760011T*********001673920345670007###############T*********001576539935240001###############F000004***001912305628450006###############T*********001593204812350008###############T*********002728395623010004812345678910013F001007010002599325197740002839205647230005F002005009001728495612340010###############T*********001938046212360000###############T*********001912308423110012###############F003008***001839204912340009###############T*********
+\echo file ARQUIVO_KITS
+000;Kit Basico;Nada de especial;0000000000.00;######################################################001;Kangaroo;Foguete que permite salto duplo;0000001487.00;#########################################002;Stomper;Causa dano ao cair sobre o inimigo;0000002232.00;#######################################003;Viper;Atinge o inimigo com veneno;0000002579.00;################################################004;RBD;Ao morrer, permite voltar 10s antes de sua morte;0000003899.00;#############################
+\echo index kits_idx
+0010000000#######T*********0010020002#######T*********00200100010030003F0000010030010040004#######T*********
+\echo index preco_kit_idx
+0010000000000.00000################T*********0010000002232.00002################T*********0020000001487.000010000002579.00003F0000010030010000003899.00004################T*********
+\echo file ARQUIVO_PARTIDAS
+000000002024111421202120450001938046212365765399352459932519774510046219557283956230183920564723912305628456739203456759320481235839204912347284956123457209482376
+\echo index partidas_idx
+001000000000000############T*********
+\q

@@ -1,0 +1,36 @@
+Indice jogadores_idx criado com sucesso!
+Indice kits_idx criado com sucesso!
+Indice partidas_idx criado com sucesso!
+Indice resultados_idx criado com sucesso!
+Indice preco_kit_idx criado com sucesso!
+Indice jogador_kits_idx criado com sucesso!
+Indice data_partida_idx criado com sucesso!
+INSERT INTO jogadores VALUES ('93804621236', 'Cellbit');
+OK
+INSERT INTO jogadores VALUES ('57209482376', 'DavyJones');
+OK
+INSERT INTO jogadores VALUES ('72176828461', 'Subaru');
+OK
+INSERT INTO jogadores VALUES ('72176828461', 'rezendeevil');
+ERRO: Ja existe um registro com a chave 72176828461
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+OK
+INSERT INTO kits VALUES ('Stomper', 'Causa dano ao cair sobre o inimigo', 2232);
+OK
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+OK
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+57209482376, DavyJones, 202103260628, 000000000000, 0.00
+72176828461, Subaru, 202104041659, 000000000000, 0.00
+93804621236, Cellbit, 202103181430, 000000000000, 0.00
+\echo file ARQUIVO_JOGADORES
+93804621236;Cellbit;202103181430;000000000000;0000000000.00;;###########################################################################57209482376;DavyJones;202103260628;000000000000;0000000000.00;;#########################################################################72176828461;Subaru;202104041659;000000000000;0000000000.00;;############################################################################
+\echo index jogadores_idx
+001572094823760001###############T*********001938046212360000###############T*********001721768284610002###############F000001***
+\echo file ARQUIVO_KITS
+000;Kangaroo;Foguete que permite salto duplo;0000001487.00;#########################################001;Stomper;Causa dano ao cair sobre o inimigo;0000002232.00;#######################################002;Viper;Atinge o inimigo com veneno;0000002579.00;################################################
+\echo index kits_idx
+0010000000#######T*********0010020002#######T*********0010010001#######F000001***
+\echo index preco_kit_idx
+0010000001487.00000################T*********0010000002579.00002################T*********0010000002232.00001################F000001***
+\q

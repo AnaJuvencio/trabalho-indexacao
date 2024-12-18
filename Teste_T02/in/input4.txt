@@ -1,0 +1,19 @@
+SET ARQUIVO_JOGADORES TO '91230842311;pactw;202411191430;000000000001;0000000000.00;;#############################################################################83920564723;Frederica;202411191430;000000000000;0000000000.00;;#########################################################################91230562845;Emilia;202411191430;000000000002;0000000000.00;;############################################################################';
+INSERT INTO jogadores VALUES ('93804621236', 'looz');
+INSERT INTO jogadores VALUES ('57653993524', 'jvnq');
+INSERT INTO jogadores VALUES ('59932519774', 'rafz');
+INSERT INTO jogadores VALUES ('91004621999', 'Zephyre');
+UPDATE jogadores SET saldo = saldo + 5970 WHERE id_jogador = '91230842311';
+UPDATE jogadores SET saldo = saldo + 2423 WHERE id_jogador = '59932519774';
+UPDATE jogadores SET saldo = saldo + -1779 WHERE id_jogador = '91004621999';
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+\echo file ARQUIVO_JOGADORES
+\echo index jogadores_idx
+DELETE FROM jogadores WHERE id_jogador = '91230842311';
+DELETE FROM jogadores WHERE id_jogador = '93804621236';
+\echo file ARQUIVO_JOGADORES
+\echo index jogadores_idx
+VACUUM jogadores;
+\echo file ARQUIVO_JOGADORES
+\echo index jogadores_idx
+\q

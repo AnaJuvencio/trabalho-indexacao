@@ -1,0 +1,14 @@
+INSERT INTO jogadores VALUES ('93804621236', 'Cellbit');
+INSERT INTO jogadores VALUES ('57209482376', 'DavyJones');
+INSERT INTO jogadores VALUES ('72176828461', 'Subaru');
+INSERT INTO jogadores VALUES ('72176828461', 'rezendeevil');
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+INSERT INTO kits VALUES ('Stomper', 'Causa dano ao cair sobre o inimigo', 2232);
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+SELECT * FROM jogadores ORDER BY id_jogador ASC;
+\echo file ARQUIVO_JOGADORES
+\echo index jogadores_idx
+\echo file ARQUIVO_KITS
+\echo index kits_idx
+\echo index preco_kit_idx
+\q

@@ -1,0 +1,25 @@
+INSERT INTO jogadores VALUES ('91230842311', 'Felps');
+INSERT INTO jogadores VALUES ('83920491234', 'Goularte');
+INSERT INTO jogadores VALUES ('91004621999', 'Ludwig');
+INSERT INTO jogadores VALUES ('91230562845', 'Raora');
+INSERT INTO jogadores VALUES ('83920564723', 'LReporta');
+INSERT INTO kits VALUES ('Kit Basico', 'Nada de especial', 0);
+INSERT INTO kits VALUES ('Kangaroo', 'Foguete que permite salto duplo', 1487);
+INSERT INTO kits VALUES ('RBD', 'Ao morrer, permite voltar 10s antes de sua morte', 3899);
+INSERT INTO kits VALUES ('Viper', 'Atinge o inimigo com veneno', 2579);
+DELETE FROM jogadores WHERE id_jogador = '83920564723';
+UPDATE jogadores SET saldo = saldo + 1721 WHERE id_jogador = '91004621999';
+UPDATE jogadores SET saldo = saldo + 6400 WHERE id_jogador = '91230842311';
+UPDATE jogadores SET saldo = saldo + 1450 WHERE id_jogador = '91230842311';
+UPDATE jogadores SET saldo = saldo + 1530 WHERE id_jogador = '83920564723';
+UPDATE jogadores SET kits = array_append(kits, '001') WHERE id_jogador = '91004621999';
+UPDATE jogadores SET kits = array_append(kits, '002') WHERE id_jogador = '91230842311';
+UPDATE jogadores SET kits = array_append(kits, '001') WHERE id_jogador = '91230842311';
+UPDATE jogadores SET kits = array_append(kits, '010') WHERE id_jogador = '83920564723';
+\echo file ARQUIVO_JOGADORES
+\echo file ARQUIVO_KITS
+\echo index jogadores_idx
+\echo index kits_idx
+\echo index jogador_kits_secundario_idx
+\echo index jogador_kits_primario_idx
+\q
