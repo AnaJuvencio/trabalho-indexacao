@@ -933,9 +933,38 @@ void btree_write(btree_node no, btree *t) {
  */
 btree_node btree_node_malloc(btree *t) {
 	btree_node no;
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_write()");
+
+	no.this_rrn = t->qtd_nos;
+
+	no.qtd_chaves = 0;
+
+	char *aux = malloc (sizeof (char) * (btree_order-1) * (t->tam_chave)); //vetor contíguo para permitir uso de algumas funções da stdlib
+	memset (aux, 0, (btree_order-1) * (t->tam_chave));
+	no.chaves = malloc (sizeof (void*) * (btree_order-1));
+	for (int i = 0; i < btree_order-1; i++) {
+		no.chaves[i] = (aux + i * (t->tam_chave));
+	}
+
+	no.folha = true;
+	no.filhos = malloc (sizeof(int) * btree_order);
+	memset (no.filhos, -1, sizeof(int) * btree_order);
+
 	return no;
+}
+
+
+/**
+ * Função interna para liberar o espaço alocado pelo btree_node_malloc.<br />
+ *
+ * @param no Nó para o qual o espaço alocado deverá ser librerado;
+ */
+void btree_node_free (btree_node no) {
+	if (*no.chaves)
+		free (*no.chaves);
+	if (no.chaves)
+		free (no.chaves);
+	if (no.filhos)
+		free (no.filhos);
 }
 
 
