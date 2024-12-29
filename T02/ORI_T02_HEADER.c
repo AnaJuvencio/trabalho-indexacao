@@ -96,38 +96,92 @@ void criar_jogadores_idx() {
 
 
 void criar_kits_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_kits_idx()");
+    char str[TAM_CHAVE_KITS_IDX + 1];
+    for (unsigned i = 0; i < qtd_registros_kits; ++i) {
+        Kit k = recuperar_registro_kit(i);
+
+        sprintf(str, "%s%04d", k.id_kit, i);
+        btree_insert(str, &kits_idx);
+    }
+    printf(INDICE_CRIADO, "kits_idx");
 }
 
 
 void criar_partidas_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_partidas_idx()");
+    char str[TAM_CHAVE_PARTIDAS_IDX + 1];
+    for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
+        Partida p = recuperar_registro_partida(i);
+
+        sprintf(str, "%s%04d", p.id_partida, i);
+        btree_insert(str, &partidas_idx);
+    }
+    printf(INDICE_CRIADO, "partidas_idx");
 }
 
 
-void criar_resultados_idx(){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_resultados_idx()");
-}
+void criar_resultados_idx() {
+    char str[TAM_CHAVE_RESULTADOS_IDX + 1];
+    for (unsigned i = 0; i < qtd_registros_resultados; ++i) {
+        Resultado r = recuperar_registro_resultado(i);
 
+        sprintf(str, "%s%s%04d", r.id_jogador, r.id_partida, i);
+        btree_insert(str, &resultados_idx);
+    }
+    printf(INDICE_CRIADO, "resultados_idx");
+}
 
 void criar_preco_kit_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_preco_kit_idx()");
+    char str[TAM_CHAVE_PRECO_KIT_IDX + 1];
+    for (unsigned i = 0; i < qtd_registros_kits; ++i) {
+        Kit k = recuperar_registro_kit(i);
+
+        sprintf(str, "%013.2f%s", k.preco, k.id_kit);
+        btree_insert(str, &preco_kit_idx);
+    }
+    printf(INDICE_CRIADO, "preco_kit_idx");
 }
 
 
 void criar_data_partida_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_data_partida_idx()");
+    char str[TAM_CHAVE_DATA_PARTIDA_IDX + 1];
+    for (unsigned i = 0; i < qtd_registros_partidas; ++i) {
+        Partida p = recuperar_registro_partida(i);
+
+        sprintf(str, "%s%s", p.inicio, p.id_partida);
+        btree_insert(str, &data_partida_idx);
+    }
+    printf(INDICE_CRIADO, "data_partida_idx");
 }
 
 
 void criar_jogador_kits_idx() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "criar_jogador_kits_idx()");
+    char str[TAM_MAX_NOME_KIT];
+    for (unsigned i = 0; i < qtd_registros_jogadores; ++i) {
+        Jogador j = recuperar_registro_jogador(i);
+
+        for (unsigned k = 0; k < QTD_MAX_KITS; ++k) {
+            if (j.kits[k][0] != '\0') { // Verifica se o kit existe
+                Kit kit = recuperar_registro_kit(j.kits[k]);
+
+                strncpy(str, kit.nome, TAM_MAX_NOME_KIT - 1);
+                str[TAM_MAX_NOME_KIT - 1] = '\0';
+
+                // Preenche com '#' até TAM_MAX_NOME_KIT - 1
+                for (unsigned l = strlen(str); l < TAM_MAX_NOME_KIT - 1; ++l) {
+                    str[l] = '#';
+                }
+                str[TAM_MAX_NOME_KIT - 1] = '\0';
+
+                // Converte para maiúsculas
+                for (unsigned l = 0; l < TAM_MAX_NOME_KIT - 1; ++l) {
+                    str[l] = toupper(str[l]);
+                }
+
+                inverted_list_insert(str, kit.id_kit, &jogador_kits_idx);
+            }
+        }
+    }
+    printf(INDICE_CRIADO, "jogador_kits_idx");
 }
 
 

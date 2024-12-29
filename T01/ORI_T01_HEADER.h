@@ -475,10 +475,10 @@ time_t epoch;
 
 #define TIME_MAX                2147483647L
 
-//long _dstbias = 0;                  // Offset for Daylight Saving Time
-//long _timezone = 0;                 // Difference in seconds between GMT and local time
+long _dstbias = 0;                  // Offset for Daylight Saving Time
+long _timezone = 0;                 // Difference in seconds between GMT and local time
 
-#ifdef _WIN32
+/*#ifdef _WIN32
     #ifdef BUILDING_DLL
         #define DLLIMPORT __declspec(dllexport)
     #else
@@ -490,7 +490,7 @@ time_t epoch;
 
 extern DLLIMPORT long _dstbias;
 extern DLLIMPORT long _timezone;
-
+*/
 const int _ytab[2][12] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}

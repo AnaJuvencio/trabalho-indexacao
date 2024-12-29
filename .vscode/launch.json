@@ -9,14 +9,14 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/T01/ORI_T01.exe", // Caminho para o executável
+            "program": "${workspaceFolder}/T01/ORI_T01", // Caminho para o executável
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/T01",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-           "miDebuggerPath": "C:/mingw64/bin/gdb.exe",
+           "miDebuggerPath": "/usr/bin/gdb",
 
             "setupCommands": [
                 {
