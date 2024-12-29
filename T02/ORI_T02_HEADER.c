@@ -227,32 +227,107 @@ Jogador recuperar_registro_jogador(int rrn) {
 
 
 Kit recuperar_registro_kit(int rrn) {
-	Kit k;
-	
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_kit()");
 
-	return k;
+    Kit k;
+    char data[TAM_REGISTRO_KIT + 1], *p;
+    // Copiando os dados do registro do kit do arquivo para a variável data
+    strncpy(data, ARQUIVO_KITS + (rrn * TAM_REGISTRO_KIT), TAM_REGISTRO_KIT);
+    data[TAM_REGISTRO_KIT] = '\0'; // Garante terminação nula
+    // Dividindo os dados do registro do kit usando o delimitador ";"
+    p = strtok(data, ";");
+    strcpy(k.id_kit, p);  
+    p = strtok(NULL, ";");
+    strcpy(k.nome, p);  
+    p = strtok(NULL, ";");
+    strcpy(k.poder, p); 
+    p = strtok(NULL, ";");
+    k.preco = atof(p);  
+    return k;
 }
+
 
 
 Partida recuperar_registro_partida(int rrn) {
-	Partida p;
 
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_partida()");
+    Partida p;
+    char data[TAM_REGISTRO_PARTIDA + 1];
+    // Copiando o registro do arquivo com base no RRN
+    strncpy(data, ARQUIVO_PARTIDAS + (rrn * TAM_REGISTRO_PARTIDA), TAM_REGISTRO_PARTIDA);
+    data[TAM_REGISTRO_PARTIDA] = '\0'; // Garante terminação nula
+    // Dividndo os dados do registro da partida usando o delimitador ;
 
-	return p;
+    // id_partida (8 bytes ), inicio (12 bytes ), duracao (6 bytes ), cenario (4 bytes ) e id_jogadores (132 bytes, correspondendo a 12 ID de jogadores ×11 bytes cada)
+
+    strncpy(p.id_partida, data, 8);
+    p.id_partida[8] = '\0';
+    strncpy(p.inicio, data+8, 12);
+    p.inicio[12] = '\0';
+    strncpy(p.duracao, data+20, 6);
+    p.duracao[6] = '\0';
+    strncpy(p.cenario, data+26, 4);
+    p.cenario[4] = '\0';
+    strncpy(p.id_jogadores, data+30, 132);
+    p.id_jogadores[132] = '\0';
+
+
+    // token = strtok(data, ";");
+    // strcpy(p.id_partida, token);  
+    // token = strtok(NULL, ";");
+    // strcpy(p.inicio, token);  
+    // token = strtok(NULL, ";");
+    // strcpy(p.duracao, token);  
+    // token = strtok(NULL, ";");
+    // strcpy(p.cenario, token);  
+    // token = strtok(NULL, ";");
+    // strcpy(p.id_jogadores, token);  // Ids dos jogadores separados por "|"
+    return p;
 }
 
 
+
 Resultado recuperar_registro_resultado(int rrn) {
-	Resultado r;
 
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recuperar_registro_resultado()");
+    Resultado r;
+    char data[TAM_REGISTRO_RESULTADO + 1];
+    // Copiando os dados do registro de resultado do arquivo para a variável data
+    strncpy(data, ARQUIVO_RESULTADOS + (rrn * TAM_REGISTRO_RESULTADO), TAM_REGISTRO_RESULTADO);
+    data[TAM_REGISTRO_RESULTADO] = '\0'; // Garante terminação nula
+    // Dividindo os dados do registro do resultado usando o delimitador ;
 
-	return r;
+    // id_jogador (11 bytes ), id_partida (8 bytes ), id_kit (3 bytes ), colocacao (4 bytes ),  (6 bytes ) e eliminacoes (4 bytes )]
+
+    strncpy(r.id_jogador, data, 11);
+    r.id_jogador[11] = '\0';
+    strncpy(r.id_partida, data+11, 8);
+    r.id_partida[8] = '\0';
+    strncpy(r.id_kit, data+19, 3);
+    r.id_kit[3] = '\0';
+
+    char number[TAM_INT_NUMBER];
+    strncpy(number, data+22, TAM_INT_NUMBER-1);
+    number[TAM_INT_NUMBER] = '\0';
+
+    r.colocacao = atoi(number);
+
+    strncpy(r.sobrevivencia, data+26, 6);
+    r.sobrevivencia[6] = '\0';
+    
+    r.eliminacoes = atoi(data+32);
+
+
+    // p = strtok(data, ";");
+    // strcpy(r.id_jogador, p); 
+    // p = strtok(NULL, ";");
+    // strcpy(r.id_partida, p); 
+    // p = strtok(NULL, ";");
+    // strcpy(r.id_kit, p); 
+    // p = strtok(NULL, ";");
+    // r.colocacao = atoi(p); 
+    // p = strtok(NULL, ";");
+    // strcpy(r.sobrevivencia, p); 
+    // p = strtok(NULL, ";");
+    // r.eliminacoes = atoi(p); 
+    return r;
 }
 
 
@@ -290,19 +365,61 @@ void escrever_registro_jogador(Jogador j, int rrn) {
 }
 
 void escrever_registro_kit(Kit k, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_kit()");
+
+    char data[TAM_REGISTRO_KIT + 1], number[100];
+    data[0] = '\0'; 
+    number[0] = '\0';
+    // Concatenando os campos na string data
+    strcat(data, k.id_kit);
+    strcat(data, ";");
+    strcat(data, k.nome);
+    strcat(data, ";");
+    strcat(data, k.poder);
+    strcat(data, ";");
+    // Formatando o preço como string
+    sprintf(number, "%013.2lf", k.preco);
+    strcat(data, number);
+    strcat(data, ";");
+    // Preenchendo o restante com padding até TAM_REGISTRO
+    strpadright(data, '#', TAM_REGISTRO_KIT);
+    // Escrevendo no arquivo na posição certa
+    strncpy(ARQUIVO_KITS + rrn * TAM_REGISTRO_KIT, data, TAM_REGISTRO_KIT);
 }
+
 
 
 void escrever_registro_partida(Partida p, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_partida()");
+    char data[TAM_REGISTRO_PARTIDA + 1];
+    data[0] = '\0';
+    // Concatenando os campos na string data
+    strcat(data, p.id_partida);
+    strcat(data, p.inicio);
+    strcat(data, p.duracao);
+    strcat(data, p.cenario);
+    strcat(data, p.id_jogadores);
+    // Escrevendo no arquivo na posição certa
+    strncpy(ARQUIVO_PARTIDAS + rrn * TAM_REGISTRO_PARTIDA, data, TAM_REGISTRO_PARTIDA);
 }
 
-void escrever_registro_resultado (Resultado jp, int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "escrever_registro_resultado()");
+
+void escrever_registro_resultado(Resultado jp, int rrn) {
+    char data[TAM_REGISTRO_RESULTADO + 1], number[TAM_INT_NUMBER];
+    data[0] = '\0';
+    number[0] = '\0';
+    // Concatenando os campos na string data
+    strcat(data, jp.id_jogador);
+    strcat(data, jp.id_partida);
+    strcat(data, jp.id_kit);
+    // Formatando a colocação como string de 4 bytes
+    sprintf(number, "%04d", jp.colocacao);
+    strcat(data, number);
+    strcat(data, jp.sobrevivencia);
+    // Formatanso as eliminações como string de 4 bytes
+    sprintf(number, "%04d", jp.eliminacoes);
+    strcat(data, number);
+    
+    // Escrevendo no arquivo na posição adequada
+    strncpy(ARQUIVO_RESULTADOS + rrn * TAM_REGISTRO_RESULTADO, data, TAM_REGISTRO_RESULTADO);
 }
 
 
@@ -367,10 +484,32 @@ bool exibir_btree_data_partida(char *chave) {
 
 
 
-/* Funções principais */
 void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_jogador_menu()");
+    char result[TAM_CHAVE_JOGADORES_IDX + 1];
+
+    // Verificando se o jogador já foi inserido na árvore
+    if (btree_search(result, false, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx)) {
+        printf(ERRO_PK_REPETIDA, id_jogador);
+        return;
+    }
+
+    // Cadastrando todos os dados do jogador
+    Jogador novo_jogador;
+    strncpy(novo_jogador.id_jogador, id_jogador, TAM_ID_JOGADOR);
+    strncpy(novo_jogador.apelido, apelido, TAM_MAX_APELIDO);
+    strncpy(novo_jogador.cadastro, obter_data_atual(), TAM_DATETIME);
+    strncpy(novo_jogador.premio, obter_data_atual(), TAM_DATETIME);
+    novo_jogador.saldo = 0.0;
+    memset(novo_jogador.kits, 0, sizeof(novo_jogador.kits));
+
+    // Inserindo o novo jogador na árvore 
+    char str[TAM_CHAVE_JOGADORES_IDX + 1];
+    sprintf(str, "%s%04d", novo_jogador.id_jogador, qtd_registros_jogadores);
+    btree_insert(str, &jogadores_idx);
+
+    // Incrementanado o contador de registros de jogadores
+    qtd_registros_jogadores++;
+    printf(SUCESSO);
 }
 
 
@@ -385,11 +524,33 @@ void adicionar_saldo_menu(char *id_jogador, double valor) {
 }
 
 
-void adicionar_saldo(char *id_jogador, double valor, bool flag){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "adicionar_saldo()");
-}
+void adicionar_saldo(char *id_jogador, double valor, bool flag) {
+    char result[TAM_CHAVE_JOGADORES_IDX + 1];
 
+    // Verifica se o jogador está na árvore de jogadores
+    if (!btree_search(result, false, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx)) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Verifica se o valor a ser inserido é menor ou igual a zero
+    if (valor <= 0) {
+        printf(ERRO_VALOR_INVALIDO);
+        return;
+    }
+
+    // Recupera o jogador
+    int rrn = atoi(result + TAM_ID_JOGADOR);
+    Jogador j = recuperar_registro_jogador(rrn);
+
+    // Atualiza o saldo
+    j.saldo += valor;
+
+    // Escreve o registro atualizado
+    escrever_registro_jogador(j, rrn);
+
+    printf(SUCESSO);
+}
 
 void cadastrar_kit_menu(char *nome, char *poder, double preco) {
 	/*IMPLEMENTE A FUNÇÃO AQUI*/
@@ -948,9 +1109,27 @@ int btree_search_in_order(char **result, char *chave_inicio, char *chave_fim, in
  * @return Indica se alguma chave foi impressa.
  */
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_print_in_order()");
-	return false;
+    if (rrn == -1) return false;
+
+    btree_node no = btree_read(rrn, t);
+    bool found = false;
+
+    for (int i = 0; i < no.qtd_chaves; ++i) {
+        if (!no.folha) {
+            found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i], t);
+        }
+
+        if ((chave_inicio == NULL || strcmp(no.chaves[i], chave_inicio) >= 0) &&
+            (chave_fim == NULL || strcmp(no.chaves[i], chave_fim) <= 0)) {
+            found |= exibir(no.chaves[i]);
+        }
+    }
+
+    if (!no.folha) {
+        found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
+    }
+
+    return found;
 }
 
 
