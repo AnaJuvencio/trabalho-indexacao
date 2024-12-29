@@ -891,25 +891,42 @@ bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, 
  * @param t Ponteiro para o índice do tipo Árvore-B no qual será inserida a chave.
  */
 void btree_insert(char *chave, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_insert()");
-}
+    if (t->rrn_raiz == -1) {
+        // Criando uma nova raiz se a árvore estiver vazia
+        btree_node nova_raiz = btree_node_malloc(t);
+        nova_raiz.this_rrn = t->qtd_nos++;
+        nova_raiz.qtd_chaves = 1;
+        nova_raiz.folha = true;
+        nova_raiz.chaves[0] = strdup(chave);
+        for (int i = 1; i < btree_order - 1; i++) {
+            nova_raiz.chaves[i] = strdup("#");
+        }
+        nova_raiz.filhos[0] = -1;
+        nova_raiz.filhos[1] = -1;
+        t->rrn_raiz = nova_raiz.this_rrn;
+        btree_write(nova_raiz, t);
+        btree_node_free(nova_raiz);
+        return;
+    }
 
+    promovido_aux promovido = btree_insert_aux(chave, t->rrn_raiz, t);
 
-/**
- * Função auxiliar de inserção de uma chave (k) em uma Árvore-B (T). Atualiza os parâmetros da Árvore-B conforme necessário.<br />
- * Esta é uma função recursiva. Ela recebe o RRN do nó a ser trabalhado sobre.<br />
- *
- * @param chave Chave a ser inserida na Árvore-B.
- * @param rrn RRN do nó no qual deverá ser processado.
- * @param t Ponteiro para o índice do tipo Árvore-B no qual será inserida a chave.
- * @return Retorna uma struct do tipo promovido_aux que contém a chave promovida e o RRN do filho direito.
- */
-promovido_aux btree_insert_aux(char *chave, int rrn, btree *t) {
-	promovido_aux p;
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_insert_aux()");
-	return p;
+    if (promovido.chave_promovida[0] != '\0') {
+        // Inserindo uma nova raiz se a chave promovida não estiver vazia
+        btree_node nova_raiz = btree_node_malloc(t);
+        nova_raiz.this_rrn = t->qtd_nos++;
+        nova_raiz.qtd_chaves = 1;
+        nova_raiz.folha = (promovido.filho_direito == -1);
+        nova_raiz.chaves[0] = strdup(promovido.chave_promovida);
+        for (int i = 1; i < btree_order - 1; i++) {
+            nova_raiz.chaves[i] = strdup("#");
+        }
+        nova_raiz.filhos[0] = t->rrn_raiz;
+        nova_raiz.filhos[1] = promovido.filho_direito;
+        t->rrn_raiz = nova_raiz.this_rrn;
+        btree_write(nova_raiz, t);
+        btree_node_free(nova_raiz);
+    }
 }
 
 
