@@ -553,8 +553,32 @@ void adicionar_saldo(char *id_jogador, double valor, bool flag) {
 }
 
 void cadastrar_kit_menu(char *nome, char *poder, double preco) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "cadastrar_kit_menu()");
+    // Criando um novo kit e preenchendo os dados
+    Kit novo_kit;
+    sprintf(novo_kit.id_kit, "%03d", qtd_registros_kits);
+    strcpy(novo_kit.nome, nome);
+    strcpy(novo_kit.poder, poder);
+    novo_kit.preco = preco;
+
+    // Escrevendo o novo registro do kit
+    escrever_registro_kit(novo_kit, qtd_registros_kits);
+
+    // Criando as chaves para os índices
+    char chave_kits_idx[7]; // id_kit (3 bytes) + rrn (4 bytes)
+    sprintf(chave_kits_idx, "%s%04d", novo_kit.id_kit, qtd_registros_kits);
+
+    char chave_preco_kit_idx[16]; // preco (13 bytes) + id_kit (3 bytes)
+    sprintf(chave_preco_kit_idx, "%013.2f%s", novo_kit.preco, novo_kit.id_kit);
+
+    // Inserindo nos índices
+    btree_insert(chave_kits_idx, &kits_idx);
+    btree_insert(chave_preco_kit_idx, &preco_kit_idx);
+
+    // Incrementando a quantidade de registros de kits
+    qtd_registros_kits++;
+
+    // Exibindo a mensagem de sucesso
+    printf(SUCESSO);
 }
 
 
@@ -646,8 +670,10 @@ void imprimir_arquivo_jogadores_menu() {
 
 
 void imprimir_arquivo_kits_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_kits_menu()");
+    if (qtd_registros_kits == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_KITS);
 }
 
 
@@ -673,8 +699,10 @@ void imprimir_jogadores_idx_menu() {
 
 
 void imprimir_kits_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_kits_idx_menu()");
+    if (kits_idx.qtd_nos == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_KITS_IDX);
 }
 
 
@@ -692,8 +720,10 @@ void imprimir_resultados_idx_menu() {
 
 /* Imprimir índices secundários */
 void imprimir_preco_kit_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_preco_kit_idx_menu()");
+    if (preco_kit_idx.qtd_nos == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_PRECO_KIT_IDX);
 }
 
 
@@ -769,8 +799,35 @@ int busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size,
  * @param t Ponteiro para a Lista Invertida na qual serão inseridas as chaves.
  */
 void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_insert()");
+    int indice_secundario;
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, chave_secundaria, t);
+
+    if (!chave_encontrada) {
+        // Inserindo a chave secundária no índice secundário
+        fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
+        fprintf(t->arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
+        // Incrementando a quantidade de registros secundários
+        t->qtd_registros_secundario++;
+        // Inserindo o jogador no índice primário
+        fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
+        fprintf(t->arquivo_primario, "%-*s%04d", t->tam_chave_primaria, chave_primaria, -1);
+        // Incrementando a quantidade de registros primários
+        t->qtd_registros_primario++;
+        // Ordenando o índice secundário
+        qsort(t->arquivo_secundario, t->qtd_registros_secundario, t->tam_chave_secundaria + sizeof(int), t->compar);
+    } else {
+        // Recuperando o índice final da lista encadeada
+        int indice_final;
+        inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
+        // Inserindo o novo jogador no índice primário
+        fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
+        fprintf(t->arquivo_primario, "%-*s%04d", t->tam_chave_primaria, chave_primaria, -1);
+        // Atualizando o próximo índice do último jogador na lista encadeada
+        fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
+        fprintf(t->arquivo_primario, "%04d", t->qtd_registros_primario);
+        // Incrementando a quantidade de registros primários
+        t->qtd_registros_primario++;
+    }
 }
 
 
@@ -804,9 +861,7 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
  * @return Indica se a chave foi encontrada.
  */
 bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chave_secundaria, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_secondary_search()");
-	return false;
+    return inverted_list_binary_search(result, exibir_caminho, chave_secundaria, t);
 }
 
 
@@ -846,9 +901,41 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
  * @return Indica a quantidade de chaves encontradas.
  */
 int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_secondary_search()");
-	return -1;
+    int indice_atual = indice;
+    int count = 0;
+    char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
+    int proximo_indice;
+
+    while (indice_atual != -1) {
+        // Calcula o offset no arquivo primário
+        long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
+
+        // Move o ponteiro do arquivo para o offset calculado
+        fseek(t->arquivo_primario, offset, SEEK_SET);
+
+        // Lê a chave primária e o próximo índice
+        fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
+        chave_primaria[t->tam_chave_primaria] = '\0';
+        fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
+
+        if (exibir_caminho) {
+            printf("%d ", indice_atual);
+        }
+
+        if (result != NULL) {
+            strcpy(result[count], chave_primaria);
+            count++;
+        }
+
+        if (proximo_indice == -1) {
+            *indice_final = indice_atual;
+            return count;
+        }
+
+        indice_atual = proximo_indice;
+    }
+
+    return count;
 }
 
 
@@ -864,9 +951,68 @@ int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_ID
  * @return Indica se a chave foi encontrada.
  */
 bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, inverted_list *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "inverted_list_secondary_search()");
-	return false;
+    const char *base = t->arquivo_secundario;
+    size_t lim = t->qtd_registros_secundario;
+    size_t size = (TAM_MAX_NOME_KIT - 1) + TAM_RRN_REGISTRO;
+    size_t meio;
+    int cmp;
+    size_t pos_inicial = 0;
+    bool chave_encontrada = false;
+
+    // Exibindo registros percorridos
+    if (exibir_caminho) {
+        printf("(");
+    }
+
+    while (lim > 0) {
+        meio = lim >> 1; // Calculando a mediana
+        const void *p = base + meio * size;
+        char chave_atual[TAM_MAX_NOME_KIT];
+        strncpy(chave_atual, p, TAM_MAX_NOME_KIT - 1);
+        chave_atual[TAM_MAX_NOME_KIT - 1] = '\0';
+
+        cmp = t->compar(chave, chave_atual);
+
+        // Exibindo índice atual no caminho
+        if (exibir_caminho) {
+            printf("%ld", pos_inicial + meio);
+            if (cmp == 0) {
+                printf(")\n"); // Último valor do caminho
+            } else if (lim > 1) {
+                printf(" "); // Espaço entre índices
+            }
+        }
+
+        if (cmp == 0) {
+            chave_encontrada = true;
+            if (result != NULL) {
+                char rrn_str[TAM_RRN_REGISTRO + 1];
+                strncpy(rrn_str, p + (TAM_MAX_NOME_KIT - 1), TAM_RRN_REGISTRO);
+                rrn_str[TAM_RRN_REGISTRO] = '\0';
+                *result = atoi(rrn_str);
+            }
+            break;
+        }
+
+        if (cmp > 0) { // Movendo para a metade direita
+            base += (meio + 1) * size;
+            pos_inicial += meio + 1;
+            lim -= meio + 1;
+        } else { // Movendo para a metade esquerda
+            lim = meio;
+        }
+    }
+
+    if (exibir_caminho && !chave_encontrada) { // Quando a chave não é encontrada
+        printf(")\n");
+    }
+
+    if (chave_encontrada) {
+        return true;
+    } else {
+        *result = pos_inicial;
+        return false;
+    }
 }
 
 
@@ -929,7 +1075,63 @@ void btree_insert(char *chave, btree *t) {
     }
 }
 
+promovido_aux btree_insert_aux(char *chave, int rrn_atual, btree *t) {
+    promovido_aux promovido;
+    strcpy(promovido.chave_promovida, "");
+    promovido.filho_direito = -1;
 
+    if (rrn_atual == -1) {
+        // Chegou na folha e não achou a chave; vai inserir na árvore
+        strcpy(promovido.chave_promovida, chave);
+        promovido.filho_direito = -1;
+        return promovido;
+    }
+
+    // Carrega a página atual em um btree_node
+    btree_node no_atual = btree_read(rrn_atual, t);
+
+    // Verifica se a página atual contém a chave da busca
+    int indice;
+    bool chave_encontrada = btree_binary_search(&indice, false, chave, &no_atual, t);
+
+    if (indice < (btree_order - 1) && chave_encontrada) {
+        // Chave já existe na árvore
+        printf(ERRO_PK_REPETIDA, chave);
+        btree_node_free(no_atual);
+        return promovido;
+    }
+
+    // Insere recursivamente
+    promovido_aux promovido_filho = btree_insert_aux(chave, no_atual.filhos[indice], t);
+
+    if (promovido_filho.chave_promovida[0] != '\0') {
+        // Verifica se houve overflow na página
+        if (no_atual.qtd_chaves < btree_order - 1) {
+            // Não houve overflow
+            if (indice < no_atual.qtd_chaves) {
+                // Move todas as chaves e seus filhos para a direita
+                for (int i = no_atual.qtd_chaves; i > indice; i--) {
+                    no_atual.chaves[i] = no_atual.chaves[i - 1];
+                    no_atual.filhos[i + 1] = no_atual.filhos[i];
+                }
+            }
+            // Insere na posição do índice
+            no_atual.chaves[indice] = strdup(promovido_filho.chave_promovida);
+            no_atual.filhos[indice + 1] = promovido_filho.filho_direito;
+            no_atual.qtd_chaves++;
+            // Escreve a chave
+            btree_write(no_atual, t);
+            btree_node_free(no_atual);
+        } else {
+            // Houve overflow, retorna a chave promovida na divisão
+            promovido = btree_divide(promovido_filho, &no_atual, indice, t);
+            btree_write(no_atual, t);
+            btree_node_free(no_atual);
+        }
+    }
+
+    return promovido;
+}
 /**
  * Função auxiliar para dividir um nó de uma Árvore-B (T). Atualiza os parâmetros conforme necessário.<br />
  *
@@ -940,10 +1142,81 @@ void btree_insert(char *chave, btree *t) {
  * @return Retorna uma struct do tipo promovido_aux que contém a chave promovida e o RRN do filho direito.
  */
 promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *t) {
-	promovido_aux p;
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_divide()");
-	return p;
+    promovido_aux p;
+    btree_node novo_no = btree_node_malloc(t);
+    novo_no.this_rrn = t->qtd_nos++;
+    novo_no.qtd_chaves = 0;
+    novo_no.folha = node->folha;
+
+    int meio = btree_order / 2;
+
+    // Durante a divisão, a nova chave pode ser inserida na página antiga ou na nova página
+    if (i <= meio) {
+        // Inserção na página antiga
+        for (int j = meio; j < btree_order - 1; j++) {
+            novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
+            novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
+            novo_no.qtd_chaves++;
+            node->chaves[j] = strdup("#");
+            node->filhos[j + 1] = -1;
+        }
+
+        for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
+            novo_no.chaves[j] = strdup("#");
+            novo_no.filhos[j + 1] = -1;
+        }
+
+        for (int j = btree_order - 2; j > i; j--) {
+            node->chaves[j] = node->chaves[j - 1];
+            node->filhos[j + 1] = node->filhos[j];
+        }
+
+        node->chaves[i] = strdup(promo.chave_promovida);
+        node->filhos[i + 1] = promo.filho_direito;
+        node->qtd_chaves++;
+    } else {
+        // Inserção na página nova
+        for (int j = meio + 1; j < btree_order - 1; j++) {
+            novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
+            novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
+            novo_no.qtd_chaves++;
+            node->chaves[j] = strdup("#");
+            node->filhos[j + 1] = -1;
+        }
+
+        for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
+            novo_no.chaves[j] = strdup("#");
+            novo_no.filhos[j + 1] = -1;
+        }
+
+        for (int j = novo_no.qtd_chaves; j > i - meio - 1; j--) {
+            novo_no.chaves[j] = novo_no.chaves[j - 1];
+            novo_no.filhos[j + 1] = novo_no.filhos[j];
+        }
+
+        novo_no.chaves[i - meio - 1] = strdup(promo.chave_promovida);
+        novo_no.filhos[i - meio] = promo.filho_direito;
+        novo_no.qtd_chaves++;
+    }
+
+    // Cria um promovido_aux para promover uma chave para ser pai desses dois nós
+    strcpy(p.chave_promovida, node->chaves[meio]);
+    p.filho_direito = novo_no.this_rrn;
+
+    novo_no.filhos[0] = node->filhos[meio + 1];
+    node->chaves[meio] = strdup("#");
+    node->filhos[meio + 1] = -1;
+    node->qtd_chaves--;
+
+    novo_no.folha = (novo_no.filhos[0] == -1);
+
+    btree_write(novo_no, t);
+    btree_node_free(novo_no);
+
+    btree_write(*node, t);
+    btree_node_free(*node);
+
+    return p;
 }
 
 
@@ -1038,9 +1311,42 @@ bool btree_borrow_or_merge(btree_node *node, int i, btree *t) {
  * @return Indica se a chave foi encontrada.
  */
 bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_search()");
-	return false;
+    // Se chegou ao fim da árvore (chegou em uma folha)
+    if (rrn == -1) {
+        if (exibir_caminho) {
+            printf("\n");
+        }
+        return false; // Chave não encontrada
+    }
+
+    // Se exibir_caminho (caminhando pela árvore)
+    if (exibir_caminho) {
+        printf(" %d", rrn);
+    }
+
+    // Cria um nó e lê a página (btree_read())
+    btree_node no = btree_read(rrn, t);
+
+    // Faz uma busca binária no nó para procurar a chave ('btree_binary_search()')
+    int indice;
+    bool chave_encontrada = btree_binary_search(&indice, exibir_caminho, chave, &no, t);
+
+    // Se a chave for encontrada (busca binária retorna 'true')
+    if (chave_encontrada) {
+        if (result != NULL) {
+            strcpy(result, no.chaves[indice]); // Copia a chave usando o índice recuperado na busca binária
+        }
+        if (exibir_caminho) {
+            printf("\n");
+        }
+        btree_node_free(no); // Desaloca o nó da memória
+        return true; // Chave encontrada
+    } else {
+        // Retorna btree_search() (recursão)
+        bool found = btree_search(result, exibir_caminho, chave, no.filhos[indice], t);
+        btree_node_free(no); // Desaloca o nó da memória
+        return found;
+    }
 }
 
 
@@ -1057,9 +1363,42 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
  * @return Indica se a chave foi encontrada.
  */
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_binary_search()");
-	return false;
+    int esq = 0, dir = node->qtd_chaves - 1, meio;
+    bool chave_encontrada = false;
+
+    if (exibir_caminho) {
+        printf("(");
+    }
+
+    while (esq <= dir) {
+        meio = (esq + dir) / 2;
+        int cmp = t->compar(chave, node->chaves[meio]);
+
+        if (exibir_caminho) {
+            printf(" %d", meio);
+        }
+
+        if (cmp == 0) {
+            *result = meio;
+            chave_encontrada = true;
+            break;
+        } else if (cmp < 0) {
+            dir = meio - 1;
+        } else {
+            esq = meio + 1;
+        }
+    }
+
+    if (exibir_caminho) {
+        printf(" )\n");
+    }
+
+    if (chave_encontrada) {
+        return true;
+    } else {
+        *result = esq;
+        return false;
+    }
 }
 
 
@@ -1126,27 +1465,33 @@ int btree_search_in_order(char **result, char *chave_inicio, char *chave_fim, in
  * @return Indica se alguma chave foi impressa.
  */
 bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(char *chave), int rrn, btree *t) {
-    if (rrn == -1) return false;
+    if (rrn == -1) return false; // Se chegou no fim de um ramo
 
-    btree_node no = btree_read(rrn, t);
+    btree_node no = btree_read(rrn, t); // Lê a página
     bool found = false;
 
-    for (int i = 0; i < no.qtd_chaves; ++i) {
-        if (!no.folha) {
-            found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i], t);
-        }
-
-        if ((chave_inicio == NULL || strcmp(no.chaves[i], chave_inicio) >= 0) &&
-            (chave_fim == NULL || strcmp(no.chaves[i], chave_fim) <= 0)) {
-            found |= exibir(no.chaves[i]);
-        }
-    }
-
+    // Chama recursivamente btree_print_in_order() no filho [0] do nó
     if (!no.folha) {
-        found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[no.qtd_chaves], t);
+        found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[0], t);
     }
 
-    return found;
+    // Loop para imprimir todas as chaves da página atual
+    for (int i = 0; i < no.qtd_chaves; ++i) {
+        // Verifica se 'chave_inicio' e 'chave_fim' são 'NULL'
+        if ((chave_inicio == NULL || t->compar(no.chaves[i], chave_inicio) >= 0) &&
+            (chave_fim == NULL || t->compar(no.chaves[i], chave_fim) <= 0)) {
+            found |= exibir(no.chaves[i]); // Usa 'exibir()' para mostrar a chave
+        }
+
+        // Chama recursivamente btree_print_in_order() no filho da direita (i+1)
+        if (!no.folha) {
+            found |= btree_print_in_order(chave_inicio, chave_fim, exibir, no.filhos[i + 1], t);
+        }
+    }
+
+    btree_node_free(no); // Desaloca o nó da memória
+
+    return found; // Retorna true se ao menos uma chave foi impressa
 }
 
 
@@ -1157,12 +1502,65 @@ bool btree_print_in_order(char *chave_inicio, char *chave_fim, bool (*exibir)(ch
  * @param t Árvore-B na qual será feita a leitura do nó.
  */
 btree_node btree_read(int rrn, btree *t) {
-	btree_node no;
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_read()");
-	return no;
+    // Calcula o tamanho do registro
+    int tamanho_registro = btree_register_size(t);
+
+    // Aloca espaço para um vetor temporário
+    char temp[tamanho_registro + 1];
+
+    // Calcula o offset no arquivo de índice
+    long offset = rrn * tamanho_registro;
+
+    // Move o ponteiro do arquivo para o offset calculado
+    fseek(t->arquivo, offset, SEEK_SET);
+
+    // Lê os dados do arquivo para o vetor temporário
+    fread(temp, sizeof(char), tamanho_registro, t->arquivo);
+    temp[tamanho_registro] = '\0'; // Fecha a string com '\0'
+
+    // Aloca espaço para um novo nó
+    btree_node no = btree_node_malloc(t);
+    no.this_rrn = rrn;
+
+    // Atualiza os dados do nó
+    // 'qtd_chaves' está nos 3 primeiros caracteres do vetor temporário
+    char qtd_chaves_str[4];
+    strncpy(qtd_chaves_str, temp, 3);
+    qtd_chaves_str[3] = '\0';
+    no.qtd_chaves = atoi(qtd_chaves_str);
+
+    // Recupera as chaves
+    int indice = 3;
+    for (int i = 0; i < btree_order - 1; i++) {
+        no.chaves[i] = malloc(t->tam_chave + 1);
+        strncpy(no.chaves[i], temp + indice, t->tam_chave);
+        no.chaves[i][t->tam_chave] = '\0'; // Adiciona o terminador nulo
+        indice += t->tam_chave;
+    }
+
+    // Verifica se é folha
+    no.folha = (temp[indice] == '1');
+    indice++;
+
+    // Recupera todos os filhos das chaves
+    for (int i = 0; i < btree_order; i++) {
+        if (temp[indice] == '*') {
+            no.filhos[i] = -1;
+        } else {
+            char filho_str[4];
+            strncpy(filho_str, temp + indice, 3);
+            filho_str[3] = '\0';
+            no.filhos[i] = atoi(filho_str);
+        }
+        indice += 3;
+    }
+
+    return no;
 }
 
+int btree_register_size(btree *t) {
+    return sizeof(int) + sizeof(bool) + (btree_order - 1) * (t->tam_chave + 1) * sizeof(char) + btree_order * sizeof(int);
+}
 
 /**
  * Função interna para escrever um nó em uma Árvore-B (T).<br />
@@ -1171,8 +1569,41 @@ btree_node btree_read(int rrn, btree *t) {
  * @param t Árvore-B na qual será feita a escrita do nó.
  */
 void btree_write(btree_node no, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_write()");
+    // Calcula o tamanho do registro
+    int tamanho_registro = btree_register_size(t);
+
+    // Cria um vetor temporário para armazenar o registro
+    char temp[tamanho_registro + 1];
+    int indice = 0;
+
+    // Copia a quantidade de chaves (int, 3 bytes)
+    sprintf(temp + indice, "%03d", no.qtd_chaves);
+    indice += 3;
+
+    // Loop para recuperar as chaves (0 a 'btree_order-1')
+    for (int i = 0; i < btree_order - 1; i++) {
+        strncpy(temp + indice, no.chaves[i], t->tam_chave);
+        indice += t->tam_chave;
+    }
+
+    // Indica se a página (nó) é uma folha
+    temp[indice] = no.folha ? 'T' : 'F';
+    indice++;
+
+    // Loop para recuperar os filhos
+    for (int i = 0; i < btree_order; i++) {
+        if (no.filhos[i] == -1) {
+            strncpy(temp + indice, "***", 3);
+        } else {
+            sprintf(temp + indice, "%03d", no.filhos[i]);
+        }
+        indice += 3;
+    }
+
+    // Copia o registro no arquivo da árvore
+    long offset = no.this_rrn * tamanho_registro;
+    fseek(t->arquivo, offset, SEEK_SET);
+    fwrite(temp, sizeof(char), tamanho_registro, t->arquivo);
 }
 
 
