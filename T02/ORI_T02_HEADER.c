@@ -583,14 +583,173 @@ void cadastrar_kit_menu(char *nome, char *poder, double preco) {
 
 
 void comprar_kit_menu(char *id_jogador, char *id_kit) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "comprar_kit_menu()");
+    // Cria duas chaves para recuperar 'jogador' e 'kit' durante a busca
+    char chave_jogador[TAM_CHAVE_JOGADORES_IDX + 1];
+    char chave_kit[TAM_CHAVE_KITS_IDX + 1];
+    sprintf(chave_jogador, "%s", id_jogador);
+    sprintf(chave_kit, "%s", id_kit);
+
+    // Verifica se o jogador já existe
+    int indice_jogador;
+    bool jogador_encontrado = btree_search(chave_jogador, false, chave_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+    if (!jogador_encontrado) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Verifica se o kit existe
+    int indice_kit;
+    bool kit_encontrado = btree_search(chave_kit, false, chave_kit, kits_idx.rrn_raiz, &kits_idx);
+    if (!kit_encontrado) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Cria dois inteiros para recuperar o rrn
+    int rrn_jogador = atoi(chave_jogador + TAM_ID_JOGADOR - 1);
+    int rrn_kit = atoi(chave_kit + TAM_ID_KIT - 1);
+
+    // Recupera os registros usando o rrn
+    Jogador jogador = recuperar_registro_jogador(rrn_jogador);
+    Kit kit = recuperar_registro_kit(rrn_kit);
+
+    // Checa se o valor do kit é maior que o saldo do jogador
+    if (jogador.saldo < kit.preco) {
+        printf(ERRO_SALDO_NAO_SUFICIENTE);
+        return;
+    }
+
+    // Verifica se o jogador já possui o kit
+    for (int i = 0; i < QTD_MAX_KITS; i++) {
+        if (strcmp(jogador.kits[i], id_kit) == 0) {
+            printf(ERRO_KIT_REPETIDO, jogador.id_jogador, kit.nome);
+            return;
+        }
+    }
+
+    // Atribui o novo kit ao jogador
+    for (int i = 0; i < QTD_MAX_KITS; i++) {
+        if (jogador.kits[i][0] == '\0') {
+            strcpy(jogador.kits[i], id_kit);
+            break;
+        }
+    }
+    jogador.saldo -= kit.preco; // Atualiza o saldo do jogador
+
+    // Escreve o registro do jogador
+    escrever_registro_jogador(jogador, rrn_jogador);
+
+    // Atualiza a lista invertida
+    char kit_maiusculo[TAM_MAX_NOME_KIT];
+    strupr(strcpy(kit_maiusculo, kit.nome));
+    inverted_list_insert(kit_maiusculo, jogador.id_jogador, &jogador_kits_idx);
+
+    printf(SUCESSO);
 }
 
 
 void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_jogadores, char *kits_jogadores, char *duracoes_jogadores, char *eliminacoes_jogadores) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "executar_partida_menu()");
+    // Verificando se todos os jogadores existem e possuem os kits
+    for (int i = 0; i < QTD_MAX_JOGADORES; i++) {
+        char id_jogador[TAM_ID_JOGADOR];
+        char id_kit[TAM_ID_KIT];
+        strncpy(id_jogador, id_jogadores + i * (TAM_ID_JOGADOR - 1), TAM_ID_JOGADOR - 1);
+        id_jogador[TAM_ID_JOGADOR - 1] = '\0';
+        strncpy(id_kit, kits_jogadores + i * (TAM_ID_KIT - 1), TAM_ID_KIT - 1);
+        id_kit[TAM_ID_KIT - 1] = '\0'; // Garantindo terminação nula
+
+        // Verificando se o jogador existe
+        char chave_jogador[TAM_CHAVE_JOGADORES_IDX + 1];
+        sprintf(chave_jogador, "%s", id_jogador);
+        bool jogador_encontrado = btree_search(chave_jogador, false, chave_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+        if (!jogador_encontrado) {
+            printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+            return;
+        }
+        int rrn_jogador = atoi(chave_jogador + TAM_ID_JOGADOR - 1);
+        Jogador jogador = recuperar_registro_jogador(rrn_jogador); // Recuperando o jogador
+
+        // Verificar se o jogador possui o kit
+        bool possui_kit = false;
+        for (int j = 0; j < QTD_MAX_KITS; j++) {
+            if (strcmp(jogador.kits[j], id_kit) == 0) {
+                possui_kit = true;
+                break;
+            }
+        }
+        if (!possui_kit) {
+            char chave_kit[TAM_CHAVE_KITS_IDX + 1];
+            sprintf(chave_kit, "%s", id_kit);
+            bool kit_encontrado = btree_search(chave_kit, false, chave_kit, kits_idx.rrn_raiz, &kits_idx);
+            if (!kit_encontrado) {
+                printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+                return;
+            }
+            int rrn_kit = atoi(chave_kit + TAM_ID_KIT - 1);
+            Kit k = recuperar_registro_kit(rrn_kit);
+            printf(ERRO_JOGADOR_KIT, id_jogador, k.nome);
+            return;
+        }
+    }
+
+    // Guardando os resultados individuais
+    for (int i = 0; i < QTD_MAX_JOGADORES; i++) {
+        char id_jogador[TAM_ID_JOGADOR];
+        char id_kit[TAM_ID_KIT];
+        strncpy(id_jogador, id_jogadores + i * (TAM_ID_JOGADOR - 1), TAM_ID_JOGADOR - 1);
+        id_jogador[TAM_ID_JOGADOR - 1] = '\0';
+        strncpy(id_kit, kits_jogadores + i * (TAM_ID_KIT - 1), TAM_ID_KIT - 1);
+        id_kit[TAM_ID_KIT - 1] = '\0'; // Garantindo terminação nula
+
+        // Criando um novo resultado e preenchendo as variáveis
+        Resultado resultado;
+        strcpy(resultado.id_jogador, id_jogador);
+        sprintf(resultado.id_partida, "%08d", qtd_registros_partidas);
+        strcpy(resultado.id_kit, id_kit);
+        resultado.colocacao = i + 1;
+        strncpy(resultado.sobrevivencia, duracoes_jogadores + i * (TAM_TIME - 1), TAM_TIME - 1);
+        resultado.sobrevivencia[TAM_TIME - 1] = '\0';
+        char aux[TAM_INT_NUMBER];
+        strncpy(aux, eliminacoes_jogadores + i * (TAM_INT_NUMBER - 1), TAM_INT_NUMBER - 1);
+        aux[TAM_INT_NUMBER - 1] = '\0';
+        resultado.eliminacoes = atoi(aux);
+
+        // Escrevendo o resultado e atualizando o índice
+        escrever_registro_resultado(resultado, qtd_registros_resultados);
+
+        // Criando a chave para o índice de resultados
+        char chave_resultado[TAM_CHAVE_RESULTADOS_IDX + 1];
+        sprintf(chave_resultado, "%s%s", resultado.id_jogador, resultado.id_partida);
+        btree_insert(chave_resultado, &resultados_idx);
+
+        qtd_registros_resultados++;
+    }
+
+    // Preenchendo uma nova partida
+    Partida partida;
+    sprintf(partida.id_partida, "%08d", qtd_registros_partidas);
+    strcpy(partida.inicio, inicio);
+    strcpy(partida.duracao, duracao);
+    strcpy(partida.cenario, cenario);
+    strncpy(partida.id_jogadores, id_jogadores, TAM_ID_JOGADORES);
+    partida.id_jogadores[TAM_ID_JOGADORES] = '\0';
+
+    // Escrevendo a partida
+    escrever_registro_partida(partida, qtd_registros_partidas);
+
+    // Atualizando o índice de partidas
+    char chave_partida[TAM_CHAVE_PARTIDAS_IDX + 1];
+    sprintf(chave_partida, "%s", partida.id_partida);
+    btree_insert(chave_partida, &partidas_idx);
+
+    // Atualizando o índice de datas
+    char chave_data[TAM_CHAVE_DATA_PARTIDA_IDX + 1];
+    sprintf(chave_data, "%s%s", partida.inicio, partida.id_partida);
+    btree_insert(chave_data, &data_partida_idx);
+
+    qtd_registros_partidas++;
+
+    printf(SUCESSO);
 }
 
 
@@ -678,8 +837,10 @@ void imprimir_arquivo_kits_menu() {
 
 
 void imprimir_arquivo_partidas_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_partidas_menu()");
+    if (qtd_registros_partidas == 0) // Verifica se o arquivo de partidas está vazio
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_PARTIDAS);
 }
 
 
@@ -707,8 +868,18 @@ void imprimir_kits_idx_menu() {
 
 
 void imprimir_partidas_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_partidas_idx_menu()");
+    if (partidas_idx.qtd_nos == 0) // Verifica se o índice de partidas está vazio
+        printf(ERRO_ARQUIVO_VAZIO);
+    else {
+        // Itera sobre os nós da árvore B e imprime as chaves
+        for (unsigned i = 0; i < partidas_idx.qtd_nos; ++i) {
+            btree_node *node = recuperar_no_btree(partidas_idx.arquivo, i);
+            for (int j = 0; j < node->qtd_chaves; ++j) {
+                printf("%s\n", node->chaves[j]);
+            }
+            liberar_no_btree(node);
+        }
+    }
 }
 
 
