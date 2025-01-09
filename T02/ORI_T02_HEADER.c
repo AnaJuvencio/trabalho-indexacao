@@ -161,23 +161,27 @@ void criar_jogador_kits_idx() {
 
         for (unsigned k = 0; k < QTD_MAX_KITS; ++k) {
             if (j.kits[k][0] != '\0') { // Verifica se o kit existe
-                Kit kit = recuperar_registro_kit(j.kits[k]);
+                // Aqui assumimos que existe uma função para buscar o RRN do kit pelo ID do kit
+                int rrn_kit = busca_binaria(j.kits[k], ARQUIVO_KITS_IDX, qtd_registros_kits, TAM_CHAVE_KITS_IDX, order_kits_idx, false, -1);
+                if (rrn_kit != -1) {
+                    Kit kit = recuperar_registro_kit(rrn_kit);
 
-                strncpy(str, kit.nome, TAM_MAX_NOME_KIT - 1);
-                str[TAM_MAX_NOME_KIT - 1] = '\0';
+                    strncpy(str, kit.nome, TAM_MAX_NOME_KIT - 1);
+                    str[TAM_MAX_NOME_KIT - 1] = '\0';
 
-                // Preenche com '#' até TAM_MAX_NOME_KIT - 1
-                for (unsigned l = strlen(str); l < TAM_MAX_NOME_KIT - 1; ++l) {
-                    str[l] = '#';
+                    // Preenche com '#' até TAM_MAX_NOME_KIT - 1
+                    for (unsigned l = strlen(str); l < TAM_MAX_NOME_KIT - 1; ++l) {
+                        str[l] = '#';
+                    }
+                    str[TAM_MAX_NOME_KIT - 1] = '\0';
+
+                    // Converte para maiúsculas
+                    for (unsigned l = 0; l < TAM_MAX_NOME_KIT - 1; ++l) {
+                        str[l] = toupper(str[l]);
+                    }
+
+                    inverted_list_insert(str, j.id_jogador, &jogador_kits_idx);
                 }
-                str[TAM_MAX_NOME_KIT - 1] = '\0';
-
-                // Converte para maiúsculas
-                for (unsigned l = 0; l < TAM_MAX_NOME_KIT - 1; ++l) {
-                    str[l] = toupper(str[l]);
-                }
-
-                inverted_list_insert(str, kit.id_kit, &jogador_kits_idx);
             }
         }
     }
@@ -495,10 +499,12 @@ void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
 
     // Cadastrando todos os dados do jogador
     Jogador novo_jogador;
-    strncpy(novo_jogador.id_jogador, id_jogador, TAM_ID_JOGADOR);
-    strncpy(novo_jogador.apelido, apelido, TAM_MAX_APELIDO);
-    strncpy(novo_jogador.cadastro, obter_data_atual(), TAM_DATETIME);
-    strncpy(novo_jogador.premio, obter_data_atual(), TAM_DATETIME);
+    strncpy(novo_jogador.id_jogador, id_jogador, TAM_ID_JOGADOR - 1);
+    novo_jogador.id_jogador[TAM_ID_JOGADOR - 1] = '\0';
+    strncpy(novo_jogador.apelido, apelido, TAM_MAX_APELIDO - 1);
+    novo_jogador.apelido[TAM_MAX_APELIDO - 1] = '\0';
+    current_datetime(novo_jogador.cadastro);
+    current_datetime(novo_jogador.premio);
     novo_jogador.saldo = 0.0;
     memset(novo_jogador.kits, 0, sizeof(novo_jogador.kits));
 
@@ -507,15 +513,37 @@ void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
     sprintf(str, "%s%04d", novo_jogador.id_jogador, qtd_registros_jogadores);
     btree_insert(str, &jogadores_idx);
 
-    // Incrementanado o contador de registros de jogadores
+    // Escrevendo o novo jogador no arquivo de dados
+    escrever_registro_jogador(novo_jogador, qtd_registros_jogadores);
+
+    // Incrementando o contador de registros de jogadores
     qtd_registros_jogadores++;
     printf(SUCESSO);
 }
 
-
+// Até que foi tranquilo fazer, precisa testar :(
 void remover_jogador_menu(char *id_jogador) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "remover_jogador_menu()");
+    // Verifica se o jogador se encontra no sistema
+    char chave_jogador[TAM_CHAVE_JOGADORES_IDX + 1];
+    sprintf(chave_jogador, "%s", id_jogador);
+    bool jogador_encontrado = btree_search(chave_jogador, false, chave_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+    if (!jogador_encontrado) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+        return;
+    }
+
+    // Recupera o jogador no arquivo
+    int rrn_jogador = atoi(chave_jogador + TAM_ID_JOGADOR - 1);
+    Jogador jogador = recuperar_registro_jogador(rrn_jogador);
+
+    // Marca o jogador como excluído e escreve no arquivo
+    jogador.id_jogador[0] = '*';
+    escrever_registro_jogador(jogador, rrn_jogador);
+
+    // Remove do índice de jogadores
+    btree_delete(chave_jogador, &jogadores_idx);
+
+    printf(SUCESSO);
 }
 
 
@@ -868,16 +896,16 @@ void imprimir_kits_idx_menu() {
 
 
 void imprimir_partidas_idx_menu() {
-    if (partidas_idx.qtd_nos == 0) // Verifica se o índice de partidas está vazio
+    if (partidas_idx.qtd_nos == 0) { // Verifica se o índice de partidas está vazio
         printf(ERRO_ARQUIVO_VAZIO);
-    else {
+    } else {
         // Itera sobre os nós da árvore B e imprime as chaves
         for (unsigned i = 0; i < partidas_idx.qtd_nos; ++i) {
-            btree_node *node = recuperar_no_btree(partidas_idx.arquivo, i);
-            for (int j = 0; j < node->qtd_chaves; ++j) {
-                printf("%s\n", node->chaves[j]);
+            btree_node node = btree_read(i, &partidas_idx);
+            for (int j = 0; j < node.qtd_chaves; ++j) {
+                printf("%s\n", node.chaves[j]);
             }
-            liberar_no_btree(node);
+            btree_node_free(node);
         }
     }
 }
@@ -915,11 +943,39 @@ void imprimir_jogador_kits_primario_idx_menu() {
 	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_jogador_kits_primario_idx_menu()");
 }
 
-
+// Utilizando  a lógica do trabalho anterior como base
 /* Liberar espaço */
 void liberar_espaco_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "liberar_espaco_menu()");
+    int rrn_atual = 0; // RRN atualizado para os registros válidos
+
+    // Redefine a raiz do índice e a quantidade de nós
+    jogadores_idx.rrn_raiz = -1;
+    jogadores_idx.qtd_nos = 0;
+
+    for (int i = 0; i < qtd_registros_jogadores; ++i) {
+        // Recuperando o registro do jogador no índice atual
+        Jogador jogador = recuperar_registro_jogador(i);
+
+        // Verificando se o registro é válido
+        if (strncmp(jogador.id_jogador, "*", 1) != 0) {
+            // Reescreve o registro no arquivo de dados no RRN correspondente
+            escrever_registro_jogador(jogador, rrn_atual);
+
+            // Criando a chave (id + rrn) e insere o jogador na árvore
+            char chave_jogador[TAM_CHAVE_JOGADORES_IDX + 1];
+            sprintf(chave_jogador, "%s%04d", jogador.id_jogador, rrn_atual);
+            btree_insert(chave_jogador, &jogadores_idx);
+
+            rrn_atual++; // Incrementando o RRN para a próxima posição válida
+        }
+    }
+
+    // Atualizando o número de registros para refletir apenas os válidos
+    qtd_registros_jogadores = rrn_atual;
+
+    // Marcando o fim do arquivo com \0 após o último registro válido
+    ARQUIVO_JOGADORES[rrn_atual * TAM_REGISTRO_JOGADOR] = '\0';
+    printf(SUCESSO);
 }
 
 /* Funções de busca binária */
@@ -976,7 +1032,7 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
     if (!chave_encontrada) {
         // Inserindo a chave secundária no índice secundário
         fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
-        fprintf(t->arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
+        fprintf(t.arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
         // Incrementando a quantidade de registros secundários
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
@@ -1424,10 +1480,60 @@ void btree_delete(char *chave, btree *t) {
  * @param t Ponteiro para o índice do tipo Árvore-B do qual será removida a chave.
  * @return Indica se a remoção deixou o nó que foi processado com menos chaves que o mínimo necessário.
  */
-bool btree_delete_aux(char *chave, int rrn, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_delete_aux()");
-	return false;
+
+
+bool btree_delete_aux(char *chave, int rrn, btree *t) { // Triste essa função
+    if (rrn == -1) {
+        return false; // Nó inválido
+    }
+    // Criando um nó para ler a página atual
+    btree_node no = btree_read(rrn, t);
+    // Verificando se a chave está na página atual
+    int result;
+    bool found = btree_binary_search(&result, false, chave, &no, t);
+    if (found && strcmp(no.chaves[result], chave) == 0) {
+        // A chave está na página
+        if (!no.folha) {
+            // Não é uma folha
+            btree_node filho_esquerdo = btree_read(no.filhos[result], t);
+            // Copia a última chave do filho esquerdo para a página atual
+            strcpy(no.chaves[result], filho_esquerdo.chaves[filho_esquerdo.qtd_chaves - 1]);
+            btree_write(no, t);
+
+            // Verificando se houve underflow no filho esquerdo
+            bool underflow = btree_delete_aux(filho_esquerdo.chaves[filho_esquerdo.qtd_chaves - 1], no.filhos[result], t);
+            btree_node_free(filho_esquerdo);
+            if (underflow) {
+                btree_node_free(no);
+                return btree_borrow_or_merge(&no, result, t);
+            }
+        } else {
+            // É uma folha:
+            if (result < no.qtd_chaves - 1) {
+                // Move todas as chaves a partir do índice para a esquerda
+                for (int i = result; i < no.qtd_chaves - 1; i++) {
+                    strcpy(no.chaves[i], no.chaves[i + 1]);
+                }
+            }
+            // Preenchendo a última posição com uma string vazia com #
+            memset(no.chaves[no.qtd_chaves - 1], '#', t->tam_chave);
+            no.qtd_chaves--;
+            btree_write(no, t);
+
+            // Verificando se houve underflow na página atual
+            bool underflow = no.qtd_chaves < (btree_order - 1) / 2;
+            btree_node_free(no);
+            return underflow;
+        }
+    } else {
+        // A Chave não foi encontrada na página atual
+        bool underflow = btree_delete_aux(chave, no.filhos[result], t);
+        btree_node_free(no);
+        if (underflow) {
+            return btree_borrow_or_merge(&no, result, t);
+        }
+    }
+    return false; // Não houve underflo
 }
 
 
@@ -1440,10 +1546,101 @@ bool btree_delete_aux(char *chave, int rrn, btree *t) {
  * @param t Ponteiro para o índice do tipo Árvore-B no qual serão redistribuídos ou concatenados os nós irmãos adjacentes.
  * @return Indica se a redistribuição ou concatenação deixou o nó pai com menos chaves que o mínimo necessário.
  */
-bool btree_borrow_or_merge(btree_node *node, int i, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_borrow_or_merge()");
-	return false;
+
+// Por favor, funcione de primeira, amém!
+bool btree_borrow_or_merge(btree_node *no, int i, btree *t) {
+    int min_chaves = (btree_order - 1) / 2;
+
+    // Verificando se é possível ter um irmão à direita
+    if (i + 1 < no->qtd_chaves + 1) {
+        int rrn_irmao_direito = no->filhos[i + 1];
+        if (rrn_irmao_direito != -1) {
+            btree_node irmao_direito = btree_read(rrn_irmao_direito, t);
+            if (irmao_direito.qtd_chaves > min_chaves) {
+                // Empresta do irmão à direita
+                // Desce a chave do pai e sobe a chave do irmão
+                strcpy(no->chaves[i], irmao_direito.chaves[0]);
+                for (int j = 0; j < irmao_direito.qtd_chaves - 1; j++) {
+                    strcpy(irmao_direito.chaves[j], irmao_direito.chaves[j + 1]);
+                }
+                memset(irmao_direito.chaves[irmao_direito.qtd_chaves - 1], '#', t->tam_chave);
+                irmao_direito.qtd_chaves--;
+
+                btree_write(*no, t);
+                btree_write(irmao_direito, t);
+                btree_node_free(irmao_direito);
+                return false; // Não houve underflow
+            }
+            btree_node_free(irmao_direito);
+        }
+    }
+
+    // Verificando se é possível ter um irmão à esquerda
+    if (i - 1 >= 0) {
+        int rrn_irmao_esquerdo = no->filhos[i - 1];
+        if (rrn_irmao_esquerdo != -1) {
+            btree_node irmao_esquerdo = btree_read(rrn_irmao_esquerdo, t);
+            if (irmao_esquerdo.qtd_chaves > min_chaves) {
+                // Empresta do irmão à esquerda
+                // Desce a chave do pai e sobe a chave do irmão
+                for (int j = no->qtd_chaves; j > 0; j--) {
+                    strcpy(no->chaves[j], no->chaves[j - 1]);
+                }
+                strcpy(no->chaves[0], irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves - 1]);
+                memset(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves - 1], '#', t->tam_chave);
+                irmao_esquerdo.qtd_chaves--;
+
+                btree_write(*no, t);
+                btree_write(irmao_esquerdo, t);
+                btree_node_free(irmao_esquerdo);
+                return false; // Não houve underflow
+            }
+            btree_node_free(irmao_esquerdo);
+        }
+    }
+
+    // Verificando se é possível ter um irmão à direita (não foi possível emprestar)
+    if (i + 1 < no->qtd_chaves + 1) {
+        int rrn_irmao_direito = no->filhos[i + 1];
+        if (rrn_irmao_direito != -1) {
+            btree_node irmao_direito = btree_read(rrn_irmao_direito, t);
+            if (irmao_direito.qtd_chaves <= min_chaves) {
+                // Realiza fusão com o irmão à direita
+                strcpy(no->chaves[no->qtd_chaves], irmao_direito.chaves[0]);
+                for (int j = 1; j < irmao_direito.qtd_chaves; j++) {
+                    strcpy(no->chaves[no->qtd_chaves + j], irmao_direito.chaves[j]);
+                }
+                no->qtd_chaves += irmao_direito.qtd_chaves;
+
+                btree_write(*no, t);
+                btree_node_free(irmao_direito);
+                return true; // Houve underflow
+            }
+            btree_node_free(irmao_direito);
+        }
+    }
+
+    // Verificando se é possível ter um irmão à esquerda (não foi possível emprestar)
+    if (i - 1 >= 0) {
+        int rrn_irmao_esquerdo = no->filhos[i - 1];
+        if (rrn_irmao_esquerdo != -1) {
+            btree_node irmao_esquerdo = btree_read(rrn_irmao_esquerdo, t);
+            if (irmao_esquerdo.qtd_chaves <= min_chaves) {
+                // Realiza fusão com o irmão à esquerda
+                for (int j = 0; j < no->qtd_chaves; j++) {
+                    strcpy(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves + j], no->chaves[j]);
+                }
+                irmao_esquerdo.qtd_chaves += no->qtd_chaves;
+
+                btree_write(irmao_esquerdo, t);
+                btree_node_free(irmao_esquerdo);
+                return true; // Houve underflow
+            }
+            btree_node_free(irmao_esquerdo);
+        }
+    }
+
+    return false; // Não houve underflow
 }
 
 
@@ -1514,9 +1711,9 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
         return true; // Chave encontrada
     } else {
         // Retorna btree_search() (recursão)
-        bool found = btree_search(result, exibir_caminho, chave, no.filhos[indice], t);
+        bool f = btree_search(result, exibir_caminho, chave, no.filhos[indice], t);
         btree_node_free(no); // Desaloca o nó da memória
-        return found;
+        return f;
     }
 }
 
@@ -1729,9 +1926,7 @@ btree_node btree_read(int rrn, btree *t) {
     return no;
 }
 
-int btree_register_size(btree *t) {
-    return sizeof(int) + sizeof(bool) + (btree_order - 1) * (t->tam_chave + 1) * sizeof(char) + btree_order * sizeof(int);
-}
+
 
 /**
  * Função interna para escrever um nó em uma Árvore-B (T).<br />
@@ -1826,8 +2021,8 @@ void btree_node_free (btree_node no) {
  * @param t Árvore-B base para o qual será calculado o tamanho.
  */
 int btree_register_size(btree *t) {
-	int chaves_ordenadas = (btree_order-1)*t->tam_chave;
-	return 3 + chaves_ordenadas + 1 + (btree_order*3);
+    int chaves_ordenadas = (btree_order - 1) * t->tam_chave;
+    return 3 + chaves_ordenadas + 1 + (btree_order * 3);
 }
 
 
