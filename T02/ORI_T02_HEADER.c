@@ -1032,7 +1032,7 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
     if (!chave_encontrada) {
         // Inserindo a chave secundária no índice secundário
         fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
-        fprintf(t.arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
+        fprintf(t->arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
         // Incrementando a quantidade de registros secundários
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
