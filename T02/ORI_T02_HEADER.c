@@ -440,15 +440,19 @@ bool exibir_jogador(int rrn) {
 }
 
 bool exibir_kit(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_kit()");
-	return false;
+    if (rrn < 0)
+        return false;
+    Kit k = recuperar_registro_kit(rrn);
+    printf("%s, %s, %s, %.2lf\n", k.id_kit, k.nome, k.poder, k.preco);
+    return true;
 }
 
 bool exibir_partida(int rrn) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_partida()");
-	return false;
+    if (rrn < 0)
+        return false;
+    Partida p = recuperar_registro_partida(rrn);
+    printf("%s, %s, %s, %s, %s\n", p.id_partida, p.inicio, p.duracao, p.cenario, p.id_jogadores);
+    return true;
 }
 
 
@@ -469,9 +473,12 @@ bool exibir_btree_kits(char *chave) {
 }
 
 bool exibir_btree_partidas(char *chave) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_partidas()");
-	return false;
+    char num[5];
+    memset(num, 0, 5);
+    memcpy(num, chave + TAM_ID_PARTIDA - 1, 4);
+
+    int rrn = strtol(num, NULL, 10);
+    return exibir_partida(rrn);
 }
 
 bool exibir_btree_preco_kit(char *chave) {
@@ -809,8 +816,22 @@ void buscar_jogador_id_menu(char *id_jogador) {
 
 
 void buscar_kit_id_menu(char *id_kit) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_kit_id_menu()");
+    char str[TAM_CHAVE_KITS_IDX];
+    memset(str, 0, TAM_CHAVE_KITS_IDX);
+
+    printf(REGS_PERCORRIDOS);
+    bool found = btree_search(str, true, id_kit, kits_idx.rrn_raiz, &kits_idx);
+    printf("\n");
+
+    if (!found) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    } else {
+        char num[5];
+        memset(num, 0, 5);
+        memcpy(num, str + TAM_ID_KIT - 1, 4);
+
+        exibir_kit(strtol(num, NULL, 10));
+    }
 }
 
 
@@ -841,9 +862,12 @@ void listar_kits_compra_menu(char *id_jogador) {
 }
 
 
-void listar_partidas_periodo_menu(char *data_inicio, char *data_fim) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_partidas_periodo_menu()");
+void listar_partidas_periodo_menu(char *chave_inicio, char *chave_fim) {
+    if (partidas_idx.qtd_nos == 0) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    } else {
+        btree_print_in_order(chave_inicio, chave_fim, exibir_btree_partidas, partidas_idx.rrn_raiz, &partidas_idx);
+    }
 }
 
 
