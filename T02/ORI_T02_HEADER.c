@@ -599,10 +599,10 @@ void cadastrar_kit_menu(char *nome, char *poder, double preco) {
     escrever_registro_kit(novo_kit, qtd_registros_kits);
 
     // Criando as chaves para os índices
-    char chave_kits_idx[7]; // id_kit (3 bytes) + rrn (4 bytes)
+    char chave_kits_idx[8]; // id_kit (3 bytes) + rrn (4 bytes)
     sprintf(chave_kits_idx, "%s%04d", novo_kit.id_kit, qtd_registros_kits);
 
-    char chave_preco_kit_idx[16]; // preco (13 bytes) + id_kit (3 bytes)
+    char chave_preco_kit_idx[17]; // preco (13 bytes) + id_kit (3 bytes)
     sprintf(chave_preco_kit_idx, "%013.2f%s", novo_kit.preco, novo_kit.id_kit);
 
     // Inserindo nos índices
@@ -625,7 +625,6 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
     sprintf(chave_kit, "%s", id_kit);
 
     // Verifica se o jogador já existe
-    int indice_jogador;
     bool jogador_encontrado = btree_search(chave_jogador, false, chave_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
     if (!jogador_encontrado) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -633,7 +632,6 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
     }
 
     // Verifica se o kit existe
-    int indice_kit;
     bool kit_encontrado = btree_search(chave_kit, false, chave_kit, kits_idx.rrn_raiz, &kits_idx);
     if (!kit_encontrado) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -1055,27 +1053,27 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
 
     if (!chave_encontrada) {
         // Inserindo a chave secundária no índice secundário
-        fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
-        fprintf(t->arquivo_secundario, "%-*s%04d", t->tam_chave_secundaria, chave_secundaria, t->qtd_registros_primario);
+        // fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
+        sprintf(t->arquivo_secundario + t->qtd_registros_secundario*(t->tam_chave_secundaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_secundaria, t->qtd_registros_primario);
         // Incrementando a quantidade de registros secundários
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
-        fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        fprintf(t->arquivo_primario, "%-*s%04d", t->tam_chave_primaria, chave_primaria, -1);
+        // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_primaria, -1);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
         // Ordenando o índice secundário
-        qsort(t->arquivo_secundario, t->qtd_registros_secundario, t->tam_chave_secundaria + sizeof(int), t->compar);
+        qsort(t->arquivo_secundario, t->qtd_registros_secundario, t->tam_chave_secundaria, t->compar);
     } else {
         // Recuperando o índice final da lista encadeada
         int indice_final;
         inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
         // Inserindo o novo jogador no índice primário
-        fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        fprintf(t->arquivo_primario, "%-*s%04d", t->tam_chave_primaria, chave_primaria, -1);
+        // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_primaria, -1);
         // Atualizando o próximo índice do último jogador na lista encadeada
-        fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
-        fprintf(t->arquivo_primario, "%04d", t->qtd_registros_primario);
+        // fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%04d", t->qtd_registros_primario);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
     }
@@ -1152,41 +1150,119 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
  * @return Indica a quantidade de chaves encontradas.
  */
 int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-    int indice_atual = indice;
-    int count = 0;
-    char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
-    int proximo_indice;
+    // int indice_atual = indice;
+    // int count = 0;
+    // char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
+    // int proximo_indice;
 
-    while (indice_atual != -1) {
-        // Calcula o offset no arquivo primário
-        long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
+    // while (indice_atual != -1) {
+    //     // Calcula o offset no arquivo primário
+    //     long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
 
-        // Move o ponteiro do arquivo para o offset calculado
-        fseek(t->arquivo_primario, offset, SEEK_SET);
+    //     // Move o ponteiro do arquivo para o offset calculado
+    //     fseek(t->arquivo_primario, offset, SEEK_SET);
 
-        // Lê a chave primária e o próximo índice
-        fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
-        chave_primaria[t->tam_chave_primaria] = '\0';
-        fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
+    //     // Lê a chave primária e o próximo índice
+    //     fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
+    //     chave_primaria[t->tam_chave_primaria] = '\0';
+    //     fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
 
-        if (exibir_caminho) {
-            printf("%d ", indice_atual);
-        }
+    //     if (exibir_caminho) {
+    //         printf("%d ", indice_atual);
+    //     }
 
-        if (result != NULL) {
-            strcpy(result[count], chave_primaria);
-            count++;
-        }
+    //     if (result != NULL) {
+    //         strcpy(result[count], chave_primaria);
+    //         count++;
+    //     }
 
-        if (proximo_indice == -1) {
-            *indice_final = indice_atual;
-            return count;
-        }
+    //     if (proximo_indice == -1) {
+    //         *indice_final = indice_atual;
+    //         return count;
+    //     }
 
-        indice_atual = proximo_indice;
+    //     indice_atual = proximo_indice;
+    // }
+
+    // return count;// int indice_atual = indice;
+    // int count = 0;
+    // char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
+    // int proximo_indice;
+
+    // while (indice_atual != -1) {
+    //     // Calcula o offset no arquivo primário
+    //     long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
+
+    //     // Move o ponteiro do arquivo para o offset calculado
+    //     fseek(t->arquivo_primario, offset, SEEK_SET);
+
+    //     // Lê a chave primária e o próximo índice
+    //     fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
+    //     chave_primaria[t->tam_chave_primaria] = '\0';
+    //     fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
+
+    //     if (exibir_caminho) {
+    //         printf("%d ", indice_atual);
+    //     }
+
+    //     if (result != NULL) {
+    //         strcpy(result[count], chave_primaria);
+    //         count++;
+    //     }
+
+    //     if (proximo_indice == -1) {
+    //         *indice_final = indice_atual;
+    //         return count;
+    //     }
+
+    //     indice_atual = proximo_indice;
+    // }
+
+    // return count;
+
+    int num_chaves_encontradas = 0;
+    char rrn[TAM_RRN_REGISTRO+1];
+    char prox_indice[TAM_RRN_REGISTRO+1];
+    sprintf(rrn, "%04d", indice);
+    // Exibindo o caminho inicial
+    if (exibir_caminho) {
+        printf(REGS_PERCORRIDOS);
+        printf(" %d", atoi(rrn));
     }
-
-    return count;
+    // Recuperando o primeiro corredor
+    if (result != NULL) {
+        strncpy(result[num_chaves_encontradas], t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), t->tam_chave_primaria);
+    }
+    num_chaves_encontradas++;
+    // Atualizando o índice final
+    if (indice_final != NULL) {
+        *indice_final = indice;
+    }
+    // proximo indice
+    strncpy(prox_indice, t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1) + t->tam_chave_primaria, TAM_RRN_REGISTRO);
+    // Percorrendo a lista encadeada
+    while (atoi(prox_indice) != -1) {
+        strcpy(rrn, prox_indice);
+        // Exibir o caminho
+        if (exibir_caminho) {
+            printf(" %d", atoi(rrn));
+        }
+        // Recuperando o corredor
+        if (result != NULL) {
+            strncpy(result[num_chaves_encontradas], t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), t->tam_chave_primaria);
+        }
+        num_chaves_encontradas++;
+        // Atualizando o índice final
+        if (indice_final != NULL) {
+            *indice_final = atoi(rrn);
+        }
+        strncpy(prox_indice, t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1) + t->tam_chave_primaria, TAM_RRN_REGISTRO);
+    }
+    // Exibindo nova linha
+    if (exibir_caminho) {
+        printf("\n");
+    }
+    return num_chaves_encontradas;
 }
 
 
@@ -1901,14 +1977,16 @@ btree_node btree_read(int rrn, btree *t) {
     char temp[tamanho_registro + 1];
 
     // Calcula o offset no arquivo de índice
-    long offset = rrn * tamanho_registro;
+    // long offset = rrn * tamanho_registro;
 
     // Move o ponteiro do arquivo para o offset calculado
-    fseek(t->arquivo, offset, SEEK_SET);
+    // fseek(t->arquivo, offset, SEEK_SET);
 
-    // Lê os dados do arquivo para o vetor temporário
-    fread(temp, sizeof(char), tamanho_registro, t->arquivo);
-    temp[tamanho_registro] = '\0'; // Fecha a string com '\0'
+    // // Lê os dados do arquivo para o vetor temporário
+    // fread(temp, sizeof(char), tamanho_registro, t->arquivo);
+    // temp[tamanho_registro] = '\0'; // Fecha a string com '\0'
+    strncpy(temp, t->arquivo + tamanho_registro*rrn, tamanho_registro);
+    temp[tamanho_registro] = '\0';
 
     // Aloca espaço para um novo nó
     btree_node no = btree_node_malloc(t);
@@ -1924,7 +2002,7 @@ btree_node btree_read(int rrn, btree *t) {
     // Recupera as chaves
     int indice = 3;
     for (int i = 0; i < btree_order - 1; i++) {
-        no.chaves[i] = malloc(t->tam_chave + 1);
+        // no.chaves[i] = malloc(t->tam_chave + 1);
         strncpy(no.chaves[i], temp + indice, t->tam_chave);
         no.chaves[i][t->tam_chave] = '\0'; // Adiciona o terminador nulo
         indice += t->tam_chave;
@@ -1983,7 +2061,7 @@ void btree_write(btree_node no, btree *t) {
     // Loop para recuperar os filhos
     for (int i = 0; i < btree_order; i++) {
         if (no.filhos[i] == -1) {
-            strncpy(temp + indice, "***", 3);
+            strncpy(temp + indice, "***", 4);
         } else {
             sprintf(temp + indice, "%03d", no.filhos[i]);
         }
@@ -1991,9 +2069,10 @@ void btree_write(btree_node no, btree *t) {
     }
 
     // Copia o registro no arquivo da árvore
-    long offset = no.this_rrn * tamanho_registro;
-    fseek(t->arquivo, offset, SEEK_SET);
-    fwrite(temp, sizeof(char), tamanho_registro, t->arquivo);
+    // long offset = no.this_rrn * tamanho_registro;
+    // fseek(t->arquivo, offset, SEEK_SET);
+    // fwrite(temp, sizeof(char), tamanho_registro, t->arquivo);
+    strncpy(t->arquivo + (no.this_rrn * btree_register_size(t)), temp, btree_register_size(t));
 }
 
 
