@@ -834,8 +834,23 @@ void buscar_kit_id_menu(char *id_kit) {
 
 
 void buscar_partida_id_menu(char *id_partida) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "buscar_partida_id_menu()");
+    char str[TAM_CHAVE_PARTIDAS_IDX];
+    memset(str, 0, TAM_CHAVE_PARTIDAS_IDX);
+
+    printf(REGS_PERCORRIDOS);
+    bool found = btree_search(str, true, id_partida, partidas_idx.rrn_raiz, &partidas_idx);
+    printf("\n");
+
+    if (!found) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    } else {
+        char num[5];
+        memset(num, 0, 5);
+        memcpy(num, str + TAM_ID_PARTIDA - 1, 4);
+
+        int rrn = strtol(num, NULL, 10);
+        exibir_partida(rrn);
+    }
 }
 
 
@@ -855,8 +870,42 @@ void listar_jogadores_kits_menu(char *kit){
 
 
 void listar_kits_compra_menu(char *id_jogador) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_kits_compra_menu()");
+    char str[TAM_CHAVE_JOGADORES_IDX];
+    memset(str, 0, TAM_CHAVE_JOGADORES_IDX);
+
+    printf(REGS_PERCORRIDOS);
+    bool found = btree_search(str, true, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+    printf("\n");
+
+    if (!found) {
+        printf(ERRO_REGISTRO_NAO_ENCONTRADO);
+    } else {
+        char num[5];
+        memset(num, 0, 5);
+        memcpy(num, str + TAM_ID_JOGADOR - 1, 4);
+
+        int rrn = strtol(num, NULL, 10);
+        Jogador jogador = recuperar_registro_jogador(rrn);
+
+        // Convertendo o saldo do jogador para string
+        char saldo_str[20];
+        snprintf(saldo_str, sizeof(saldo_str), "%020.2f", jogador.saldo); // formato certo?
+
+        // Listando os kits que o jogador pode comprar
+        for (int i = 0; i < preco_kit_idx.qtd_nos; i++) {
+            btree_node node = btree_read(i, &preco_kit_idx);
+            for (int j = 0; j < node.qtd_chaves; j++) {
+                if (strcmp(node.chaves[j], saldo_str) <= 0) {
+                    char num_kit[5];
+                    memset(num_kit, 0, 5);
+                    memcpy(num_kit, node.chaves[j] + TAM_ID_KIT - 1, 4);
+                    int rrn_kit = strtol(num_kit, NULL, 10);
+                    exibir_kit(rrn_kit);
+                }
+            }
+            btree_node_free(node);
+        }
+    }
 }
 
 
@@ -895,8 +944,10 @@ void imprimir_arquivo_partidas_menu() {
 
 
 void imprimir_arquivo_resultados_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_arquivo_resultados_menu()");
+    if (qtd_registros_resultados == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_RESULTADOS);
 }
 
 
@@ -934,8 +985,10 @@ void imprimir_partidas_idx_menu() {
 
 
 void imprimir_resultados_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_resultados_idx_menu()");
+    if (resultados_idx.qtd_nos == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_RESULTADOS_IDX);
 }
 
 
