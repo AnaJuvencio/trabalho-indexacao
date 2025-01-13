@@ -34,30 +34,22 @@ int order_jogadores_idx(const void *key, const void *elem) {
 
 /* Função de comparação entre chaves do índice kits_idx */
 int order_kits_idx(const void *key, const void *elem) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_kits_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_ID_KIT-1);
 }
 
 /* Função de comparação entre chaves do índice partidas_idx */
 int order_partidas_idx(const void *key, const void *elem) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_partidas_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_ID_PARTIDA-1);
 }
 
 /* Função de comparação entre chaves do índice resultados_idx */
 int order_resultados_idx(const void *key, const void *elem) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_resultados_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_CHAVE_RESULTADOS_IDX);
 }
 
 /* Função de comparação entre chaves do índice preco_kit_idx */
 int order_preco_kit_idx(const void *key, const void *elem){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_preco_kit_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_CHAVE_PRECO_KIT_IDX);
 }
 
 /* Função de comparação entre chaves do índice data_partida_idx */
@@ -69,9 +61,7 @@ int order_data_partida_idx(const void *key, const void *elem) {
 
 /* Função de comparação entre chaves do índice jogador_kits_idx */
 int order_jogador_kit_idx(const void *key, const void *elem) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_jogador_kit_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_CHAVE_JOGADOR_KIT_SECUNDARIO_IDX);
 }
 
 /* Função de comparação entre vitórias, eliminacoes e tempo de sobrevivencia dos jogadores
@@ -163,23 +153,23 @@ void criar_jogador_kits_idx() {
         for (unsigned k = 0; k < QTD_MAX_KITS; ++k) {
             if (j.kits[k][0] != '\0') { // Verifica se o kit existe
                 // Aqui assumimos que existe uma função para buscar o RRN do kit pelo ID do kit
-                int rrn_kit = busca_binaria(j.kits[k], ARQUIVO_KITS_IDX, qtd_registros_kits, TAM_CHAVE_KITS_IDX, order_kits_idx, false, -1);
+                char str_kit[TAM_CHAVE_KITS_IDX + 1]; str_kit[0] = '\0';
+                btree_search(str_kit, false, j.kits[k], kits_idx.rrn_raiz, &kits_idx);
+                char num[5];
+                memset(num, 0, 5);
+                memcpy(num, str_kit + TAM_ID_KIT - 1, 4);
+                int rrn_kit = strtol(num, NULL, 10);
                 if (rrn_kit != -1) {
                     Kit kit = recuperar_registro_kit(rrn_kit);
 
                     strncpy(str, kit.nome, TAM_MAX_NOME_KIT - 1);
-                    str[TAM_MAX_NOME_KIT - 1] = '\0';
+                    str[TAM_MAX_NOME_KIT] = '\0';
 
                     // Preenche com '#' até TAM_MAX_NOME_KIT - 1
-                    for (unsigned l = strlen(str); l < TAM_MAX_NOME_KIT - 1; ++l) {
-                        str[l] = '#';
-                    }
-                    str[TAM_MAX_NOME_KIT - 1] = '\0';
+                    strpadright(str, '#', TAM_MAX_NOME_KIT - 1);
 
                     // Converte para maiúsculas
-                    for (unsigned l = 0; l < TAM_MAX_NOME_KIT - 1; ++l) {
-                        str[l] = toupper(str[l]);
-                    }
+                    strupr(str);
 
                     inverted_list_insert(str, j.id_jogador, &jogador_kits_idx);
                 }
@@ -541,7 +531,7 @@ void cadastrar_jogador_menu(char *id_jogador, char *apelido) {
     strncpy(novo_jogador.apelido, apelido, TAM_MAX_APELIDO - 1);
     novo_jogador.apelido[TAM_MAX_APELIDO - 1] = '\0';
     current_datetime(novo_jogador.cadastro);
-    current_datetime(novo_jogador.premio);
+    sprintf(novo_jogador.premio, "%012d", 0);
     novo_jogador.saldo = 0.0;
     memset(novo_jogador.kits, 0, sizeof(novo_jogador.kits));
 
@@ -575,6 +565,7 @@ void remover_jogador_menu(char *id_jogador) {
 
     // Marcando o jogador como excluído e escreve no arquivo
     jogador.id_jogador[0] = '*';
+    jogador.id_jogador[1] = '|';
     escrever_registro_jogador(jogador, rrn_jogador);
 
     // Removendo do índice de jogadores
@@ -778,7 +769,7 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
 
         // Criando a chave para o índice de resultados
         char chave_resultado[TAM_CHAVE_RESULTADOS_IDX + 1];
-        sprintf(chave_resultado, "%s%s", resultado.id_jogador, resultado.id_partida);
+        sprintf(chave_resultado, "%s%s%04d", resultado.id_jogador, resultado.id_partida, qtd_registros_resultados);
         btree_insert(chave_resultado, &resultados_idx);
 
         qtd_registros_resultados++;
@@ -798,7 +789,7 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
 
     // Atualizando o índice de partidas
     char chave_partida[TAM_CHAVE_PARTIDAS_IDX + 1];
-    sprintf(chave_partida, "%s", partida.id_partida);
+    sprintf(chave_partida, "%s%04d", partida.id_partida, qtd_registros_partidas);
     btree_insert(chave_partida, &partidas_idx);
 
     // Atualizando o índice de datas
@@ -824,7 +815,6 @@ void buscar_jogador_id_menu(char *id_jogador) {
 	
 	printf (REGS_PERCORRIDOS);
     bool found = btree_search(str, true, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
-	printf ("\n");
 	
     if (!found)
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -844,7 +834,6 @@ void buscar_kit_id_menu(char *id_kit) {
 
     printf(REGS_PERCORRIDOS);
     bool found = btree_search(str, true, id_kit, kits_idx.rrn_raiz, &kits_idx);
-    printf("\n");
 
     if (!found) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -864,7 +853,6 @@ void buscar_partida_id_menu(char *id_partida) {
 
     printf(REGS_PERCORRIDOS);
     bool found = btree_search(str, true, id_partida, partidas_idx.rrn_raiz, &partidas_idx);
-    printf("\n");
 
     if (!found) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -873,8 +861,7 @@ void buscar_partida_id_menu(char *id_partida) {
         memset(num, 0, 5);
         memcpy(num, str + TAM_ID_PARTIDA - 1, 4);
 
-        int rrn = strtol(num, NULL, 10);
-        exibir_partida(rrn);
+        exibir_partida(strtol(num, NULL, 10));
     }
 }
 
@@ -914,7 +901,7 @@ void listar_kits_compra_menu(char *id_jogador) {
 
         // Convertendo o saldo do jogador para string
         char saldo_str[20];
-        snprintf(saldo_str, sizeof(saldo_str), "%020.2f", jogador.saldo); // formato certo?
+        sprintf(saldo_str, "%013.2f", jogador.saldo); // formato certo?
 
         // Listando os kits que o jogador pode comprar
         for (int i = 0; i < preco_kit_idx.qtd_nos; i++) {
@@ -997,14 +984,7 @@ void imprimir_partidas_idx_menu() {
     if (partidas_idx.qtd_nos == 0) { // Verifica se o índice de partidas está vazio
         printf(ERRO_ARQUIVO_VAZIO);
     } else {
-        // Itera sobre os nós da árvore B e imprime as chaves
-        for (unsigned i = 0; i < partidas_idx.qtd_nos; ++i) {
-            btree_node node = btree_read(i, &partidas_idx);
-            for (int j = 0; j < node.qtd_chaves; ++j) {
-                printf("%s\n", node.chaves[j]);
-            }
-            btree_node_free(node);
-        }
+        printf("%s\n", ARQUIVO_PARTIDAS_IDX);
     }
 }
 
@@ -1060,7 +1040,7 @@ void liberar_espaco_menu() {
         Jogador jogador = recuperar_registro_jogador(i);
 
         // Verificando se o registro é válido
-        if (strncmp(jogador.id_jogador, "*", 1) != 0) {
+        if (strncmp(jogador.id_jogador, "*|", 2) != 0) {
             // Reescreve o registro no arquivo de dados no RRN correspondente
             escrever_registro_jogador(jogador, rrn_atual);
 
@@ -1077,6 +1057,7 @@ void liberar_espaco_menu() {
     qtd_registros_jogadores = rrn_atual;
 
     // Marcando o fim do arquivo com \0 após o último registro válido
+    jogadores_idx.arquivo[jogadores_idx.qtd_nos*btree_register_size(&jogadores_idx)] = '\0';
     ARQUIVO_JOGADORES[rrn_atual * TAM_REGISTRO_JOGADOR] = '\0';
     printf(SUCESSO);
 }
@@ -1105,9 +1086,64 @@ void liberar_espaco_menu() {
  * @return Retorna o elemento encontrado ou NULL se não encontrou.
  */
 int busca_binaria_com_reps(const void *key, const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void *), bool exibir_caminho, int posicao_caso_repetido, int retorno_se_nao_encontrado) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "busca_binaria_com_reps()");
-	return -1;
+	const char *base = (const char *)base0;
+    size_t lim = nmemb;
+    size_t meio;
+    int cmp;
+    size_t pos_inicial = 0;
+
+    // Exibindo registros percorridos
+    if (exibir_caminho) {
+        printf(REGS_PERCORRIDOS);
+        printf(" "); // Corrigindo o erro de saída
+    }
+    while (lim > 0) {
+        meio = lim >> 1; // Calculando a mediana
+        const void *p = base + meio * size;
+        cmp = compar(key, p);
+
+        // Exibindo índice atual no caminho
+        if (exibir_caminho) {
+            printf("%ld", pos_inicial + meio);
+            if (cmp == 0) {
+                printf("\n"); // Último valor do caminho
+            } else if (lim > 1) {
+                printf(" "); // Espaço entre índices
+            }
+        }
+        if (cmp == 0) {
+            int pos = pos_inicial + meio;
+            // Tratando as repetições
+            if (posicao_caso_repetido < 0) {
+                // Localizando a primeira ocorrência
+                while (pos > 0 && compar(key, base0 + (pos - 1) * size) == 0) {
+                    pos--;
+                }
+            } else if (posicao_caso_repetido > 0) {
+                // Localizando a última ocorrência
+                while (pos + 1 < (int)nmemb && compar(key, base0 + (pos + 1) * size) == 0) {
+                    pos++;
+                }
+            }
+            return pos;
+        }
+        if (cmp > 0) { // Movendo para a metade direita
+            base += (meio + 1) * size;
+            pos_inicial += meio + 1;
+            lim -= meio + 1;
+        } else { // Movendo para a metade esquerda
+            lim = meio;
+        }
+    }
+    if (exibir_caminho) { // Quando a chave não é encontrada
+        printf("\n");
+    }
+    if (retorno_se_nao_encontrado == -1) {
+        return (pos_inicial > 0) ? (pos_inicial - 1) : -1; // Retorna o antecessor
+    } else if (retorno_se_nao_encontrado == 1) {
+        return (pos_inicial < nmemb) ? pos_inicial : -1;  // Retorna o sucessor
+    }
+    return -1; // Retorno padrão NULL
 }
 
 
@@ -1135,12 +1171,12 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
     if (!chave_encontrada) {
         // Inserindo a chave secundária no índice secundário
         // fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_secundario + t->qtd_registros_secundario*(t->tam_chave_secundaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_secundaria, t->qtd_registros_primario);
+        sprintf(t->arquivo_secundario + t->qtd_registros_secundario*(t->tam_chave_secundaria+TAM_RRN_REGISTRO), "%s%04d", chave_secundaria, t->qtd_registros_primario);
         // Incrementando a quantidade de registros secundários
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%s%04d", chave_primaria, -1);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
         // Ordenando o índice secundário
@@ -1151,10 +1187,10 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
         inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
         // Inserindo o novo jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%s%04d", chave_primaria, -1);
         // Atualizando o próximo índice do último jogador na lista encadeada
         // fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), "%04d", t->qtd_registros_primario);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%04d", t->qtd_registros_primario);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
     }
@@ -1445,6 +1481,8 @@ bool inverted_list_binary_search(int* result, bool exibir_caminho, char *chave, 
  * @param t Ponteiro para o índice do tipo Árvore-B no qual será inserida a chave.
  */
 void btree_insert(char *chave, btree *t) {
+    char str[t->tam_chave+1]; str[0] = '\0';
+    strpadright(str, '#', t->tam_chave);
     if (t->rrn_raiz == -1) {
         // Criando uma nova raiz se a árvore estiver vazia
         btree_node nova_raiz = btree_node_malloc(t);
@@ -1453,7 +1491,7 @@ void btree_insert(char *chave, btree *t) {
         nova_raiz.folha = true;
         nova_raiz.chaves[0] = strdup(chave);
         for (int i = 1; i < btree_order - 1; i++) {
-            nova_raiz.chaves[i] = strdup("#");
+            nova_raiz.chaves[i] = strdup(str);
         }
         nova_raiz.filhos[0] = -1;
         nova_raiz.filhos[1] = -1;
@@ -1470,12 +1508,16 @@ void btree_insert(char *chave, btree *t) {
         btree_node nova_raiz = btree_node_malloc(t);
         nova_raiz.this_rrn = t->qtd_nos++;
         nova_raiz.qtd_chaves = 1;
-        nova_raiz.folha = (promovido.filho_direito == -1);
         nova_raiz.chaves[0] = strdup(promovido.chave_promovida);
         for (int i = 1; i < btree_order - 1; i++) {
-            nova_raiz.chaves[i] = strdup("#");
+            nova_raiz.chaves[i] = strdup(str);
         }
         nova_raiz.filhos[0] = t->rrn_raiz;
+        if(nova_raiz.filhos[0] == -1) {
+            nova_raiz.folha = true;
+        } else {
+            nova_raiz.folha = false;
+        }
         nova_raiz.filhos[1] = promovido.filho_direito;
         t->rrn_raiz = nova_raiz.this_rrn;
         btree_write(nova_raiz, t);
@@ -1533,8 +1575,6 @@ promovido_aux btree_insert_aux(char *chave, int rrn_atual, btree *t) {
         } else {
             // Houve overflow, retorna a chave promovida na divisão
             promovido = btree_divide(promovido_filho, &no_atual, indice, t);
-            btree_write(no_atual, t);
-            btree_node_free(no_atual);
         }
     }
 
@@ -1556,6 +1596,9 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
     novo_no.qtd_chaves = 0;
     novo_no.folha = node->folha;
 
+    char str[t->tam_chave+1]; str[0] = '\0';
+    strpadright(str, '#', t->tam_chave);
+
     int meio = btree_order / 2;
 
     // Durante a divisão, a nova chave pode ser inserida na página antiga ou na nova página
@@ -1565,12 +1608,13 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
             novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
             novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
             novo_no.qtd_chaves++;
-            node->chaves[j] = strdup("#");
+            node->chaves[j] = strdup(str);
             node->filhos[j + 1] = -1;
+            node->qtd_chaves--;
         }
 
         for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
-            novo_no.chaves[j] = strdup("#");
+            novo_no.chaves[j] = strdup(str);
             novo_no.filhos[j + 1] = -1;
         }
 
@@ -1588,12 +1632,13 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
             novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
             novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
             novo_no.qtd_chaves++;
-            node->chaves[j] = strdup("#");
+            node->chaves[j] = strdup(str);
             node->filhos[j + 1] = -1;
+            node->qtd_chaves--;
         }
 
         for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
-            novo_no.chaves[j] = strdup("#");
+            novo_no.chaves[j] = strdup(str);
             novo_no.filhos[j + 1] = -1;
         }
 
@@ -1612,7 +1657,7 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
     p.filho_direito = novo_no.this_rrn;
 
     novo_no.filhos[0] = node->filhos[meio + 1];
-    node->chaves[meio] = strdup("#");
+    node->chaves[meio] = strdup(str);
     node->filhos[meio + 1] = -1;
     node->qtd_chaves--;
 
@@ -1647,8 +1692,9 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
  * @param t Ponteiro para o índice do tipo Árvore-B do qual será removida a chave.
  */
 void btree_delete(char *chave, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_delete()");
+	if(btree_delete_aux(chave, t->rrn_raiz, t)) {
+        t->rrn_raiz = 0;
+    }
 }
 
 
@@ -1685,7 +1731,6 @@ bool btree_delete_aux(char *chave, int rrn, btree *t) { // Triste essa função
             bool underflow = btree_delete_aux(filho_esquerdo.chaves[filho_esquerdo.qtd_chaves - 1], no.filhos[result], t);
             btree_node_free(filho_esquerdo);
             if (underflow) {
-                btree_node_free(no);
                 return btree_borrow_or_merge(&no, result, t);
             }
         } else {
@@ -1703,17 +1748,16 @@ bool btree_delete_aux(char *chave, int rrn, btree *t) { // Triste essa função
 
             // Verificando se houve underflow na página atual
             bool underflow = no.qtd_chaves < (btree_order - 1) / 2;
-            btree_node_free(no);
             return underflow;
         }
     } else {
         // A Chave não foi encontrada na página atual
         bool underflow = btree_delete_aux(chave, no.filhos[result], t);
-        btree_node_free(no);
         if (underflow) {
             return btree_borrow_or_merge(&no, result, t);
         }
     }
+    btree_node_free(no);
     return false; // Não houve underflo
 }
 
@@ -1731,28 +1775,35 @@ bool btree_delete_aux(char *chave, int rrn, btree *t) { // Triste essa função
 // Por favor, funcione de primeira, amém!
 bool btree_borrow_or_merge(btree_node *no, int i, btree *t) {
     int min_chaves = (btree_order - 1) / 2;
+    char str[t->tam_chave+1]; str[0] = '\0';
+    strpadright(str, '#', t->tam_chave);
+    str[t->tam_chave] = '\0';
+
+    btree_node filho = btree_read(no->filhos[i], t);
 
     // Verificando se é possível ter um irmão à direita
-    if (i + 1 < no->qtd_chaves + 1) {
+    if (i + 1 < btree_order) {
         int rrn_irmao_direito = no->filhos[i + 1];
         if (rrn_irmao_direito != -1) {
             btree_node irmao_direito = btree_read(rrn_irmao_direito, t);
             if (irmao_direito.qtd_chaves > min_chaves) {
                 // Empresta do irmão à direita
                 // Desce a chave do pai e sobe a chave do irmão
-                strcpy(no->chaves[i], irmao_direito.chaves[0]);
+                strcpy(filho.chaves[filho.qtd_chaves], no->chaves[i]);
+                filho.qtd_chaves++;
+                btree_write(filho, t);
+                strcpy(no->chaves[no->qtd_chaves], irmao_direito.chaves[0]);
+                btree_write(*no, t);
                 for (int j = 0; j < irmao_direito.qtd_chaves - 1; j++) {
                     strcpy(irmao_direito.chaves[j], irmao_direito.chaves[j + 1]);
                 }
-                memset(irmao_direito.chaves[irmao_direito.qtd_chaves - 1], '#', t->tam_chave);
                 irmao_direito.qtd_chaves--;
-
-                btree_write(*no, t);
+                for (int j = irmao_direito.qtd_chaves; j < btree_order-1; j++) {
+                    strcpy(irmao_direito.chaves[j], str);
+                }
                 btree_write(irmao_direito, t);
-                btree_node_free(irmao_direito);
                 return false; // Não houve underflow
             }
-            btree_node_free(irmao_direito);
         }
     }
 
@@ -1764,40 +1815,64 @@ bool btree_borrow_or_merge(btree_node *no, int i, btree *t) {
             if (irmao_esquerdo.qtd_chaves > min_chaves) {
                 // Empresta do irmão à esquerda
                 // Desce a chave do pai e sobe a chave do irmão
-                for (int j = no->qtd_chaves; j > 0; j--) {
-                    strcpy(no->chaves[j], no->chaves[j - 1]);
+                for (int j = filho.qtd_chaves; j > 0; j--) {
+                    strcpy(filho.chaves[j], filho.chaves[j - 1]);
                 }
-                strcpy(no->chaves[0], irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves - 1]);
-                memset(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves - 1], '#', t->tam_chave);
-                irmao_esquerdo.qtd_chaves--;
-
+                strcpy(filho.chaves[0], no->chaves[no->qtd_chaves - 1]);
+                filho.qtd_chaves++;
+                btree_write(filho, t);
+                strcpy(no->chaves[i-1], irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves-1]);
                 btree_write(*no, t);
+                irmao_esquerdo.qtd_chaves--;
+                for (int j = irmao_esquerdo.qtd_chaves; j < btree_order-1; j++) {
+                    strcpy(irmao_esquerdo.chaves[j], str);
+                }
                 btree_write(irmao_esquerdo, t);
-                btree_node_free(irmao_esquerdo);
                 return false; // Não houve underflow
             }
-            btree_node_free(irmao_esquerdo);
         }
     }
 
     // Verificando se é possível ter um irmão à direita (não foi possível emprestar)
-    if (i + 1 < no->qtd_chaves + 1) {
+    if (i + 1 < btree_order) {
         int rrn_irmao_direito = no->filhos[i + 1];
         if (rrn_irmao_direito != -1) {
             btree_node irmao_direito = btree_read(rrn_irmao_direito, t);
             if (irmao_direito.qtd_chaves <= min_chaves) {
                 // Realiza fusão com o irmão à direita
-                strcpy(no->chaves[no->qtd_chaves], irmao_direito.chaves[0]);
-                for (int j = 1; j < irmao_direito.qtd_chaves; j++) {
-                    strcpy(no->chaves[no->qtd_chaves + j], irmao_direito.chaves[j]);
+                strcpy(filho.chaves[filho.qtd_chaves], no->chaves[0]);
+                filho.qtd_chaves++;
+                for (int j = 0; j < no->qtd_chaves; j++) {
+                    strcpy(filho.chaves[filho.qtd_chaves], irmao_direito.chaves[j]);
+                    filho.filhos[filho.qtd_chaves] = irmao_direito.filhos[j];
+                    filho.qtd_chaves++;
                 }
-                no->qtd_chaves += irmao_direito.qtd_chaves;
+                filho.filhos[filho.qtd_chaves] = irmao_direito.filhos[irmao_direito.qtd_chaves];
+                btree_write(filho, t);
+                for (int j = i; j < no->qtd_chaves-1; j++) {
+                    no->chaves[j] = no->chaves[j + 1];
+                }
+                strcpy(no->chaves[no->qtd_chaves], str);
+                no->qtd_chaves--;
+                if (no->qtd_chaves > 0) {
+                    for (int j = i; j < no->qtd_chaves; j++) {
+                        no->filhos[j] = no->filhos[j + 1];
+                    }
+                    no->filhos[no->qtd_chaves+1] = -1;
+                } else {
+                    for (int j = 0; j <= btree_order; j++) {
+                        no->filhos[j] = no->filhos[j + 1];
+                    }
+                }
 
                 btree_write(*no, t);
-                btree_node_free(irmao_direito);
-                return true; // Houve underflow
+                irmao_direito.qtd_chaves = 0;
+                btree_write(irmao_direito, t);
+                if (no->qtd_chaves < min_chaves) {
+                    return true;
+                }
+                return false; // Não houve underflow
             }
-            btree_node_free(irmao_direito);
         }
     }
 
@@ -1808,14 +1883,37 @@ bool btree_borrow_or_merge(btree_node *no, int i, btree *t) {
             btree_node irmao_esquerdo = btree_read(rrn_irmao_esquerdo, t);
             if (irmao_esquerdo.qtd_chaves <= min_chaves) {
                 // Realiza fusão com o irmão à esquerda
-                for (int j = 0; j < no->qtd_chaves; j++) {
-                    strcpy(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves + j], no->chaves[j]);
+                strcpy(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves], no->chaves[i-1]);
+                irmao_esquerdo.qtd_chaves++;
+                for (int j = 0; j < filho.qtd_chaves; j++) {
+                    strcpy(irmao_esquerdo.chaves[irmao_esquerdo.qtd_chaves], filho.chaves[j]);
+                    irmao_esquerdo.filhos[irmao_esquerdo.qtd_chaves] = filho.filhos[j];
+                    irmao_esquerdo.qtd_chaves++;
                 }
-                irmao_esquerdo.qtd_chaves += no->qtd_chaves;
-
+                irmao_esquerdo.filhos[irmao_esquerdo.qtd_chaves] = filho.filhos[filho.qtd_chaves];
                 btree_write(irmao_esquerdo, t);
-                btree_node_free(irmao_esquerdo);
-                return true; // Houve underflow
+                
+                for (int j = i; j < no->qtd_chaves; j++) {
+                    strcpy(no->chaves[j], no->chaves[j + 1]);
+                }
+                no->qtd_chaves--;
+                if (no->qtd_chaves > 0) {
+                    for (int j = i; j < no->qtd_chaves; j++) {
+                        no->filhos[j] = no->filhos[j + 1];
+                    }
+                } else {
+                    for (int j = 0; j <= btree_order; j++) {
+                        no->filhos[j] = -1;
+                    }
+                }
+
+                btree_write(*no, t);
+                filho.qtd_chaves = 0;
+                btree_write(filho, t);
+                if (no->qtd_chaves < min_chaves) {
+                    return true;
+                }
+                return false; // Não houve underflow
             }
             btree_node_free(irmao_esquerdo);
         }
@@ -1870,7 +1968,7 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
 
     // Se exibir_caminho (caminhando pela árvore)
     if (exibir_caminho) {
-        printf(" %d", rrn);
+        printf(" %d ", rrn);
     }
 
     // Cria um nó e lê a página (btree_read())
@@ -1893,7 +1991,6 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
     } else {
         // Retorna btree_search() (recursão)
         bool f = btree_search(result, exibir_caminho, chave, no.filhos[indice], t);
-        btree_node_free(no); // Desaloca o nó da memória
         return f;
     }
 }
@@ -1912,7 +2009,7 @@ bool btree_search(char *result, bool exibir_caminho, char *chave, int rrn, btree
  * @return Indica se a chave foi encontrada.
  */
 bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_node* node, btree* t) {
-    int esq = 0, dir = node->qtd_chaves - 1, meio;
+    int esq = 0, dir = node->qtd_chaves, meio;
     bool chave_encontrada = false;
 
     if (exibir_caminho) {
@@ -1920,11 +2017,11 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
     }
 
     while (esq <= dir) {
-        meio = (esq + dir) / 2;
+        meio = esq + (dir / 2);
         int cmp = t->compar(chave, node->chaves[meio]);
 
         if (exibir_caminho) {
-            printf(" %d", meio);
+            printf("%d", meio);
         }
 
         if (cmp == 0) {
@@ -1932,14 +2029,21 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
             chave_encontrada = true;
             break;
         } else if (cmp < 0) {
+            if (exibir_caminho && meio>0) {
+                printf(" ");
+            }
             dir = meio - 1;
         } else {
+            if (exibir_caminho && meio>0) {
+                printf(" ");
+            }
             esq = meio + 1;
+            dir--;
         }
     }
 
     if (exibir_caminho) {
-        printf(" )\n");
+        printf(")");
     }
 
     if (chave_encontrada) {
@@ -2090,7 +2194,7 @@ btree_node btree_read(int rrn, btree *t) {
     }
 
     // Verifica se é folha
-    no.folha = (temp[indice] == '1');
+    no.folha = (temp[indice] == 'T');
     indice++;
 
     // Recupera todos os filhos das chaves
@@ -2123,30 +2227,28 @@ void btree_write(btree_node no, btree *t) {
 
     // Cria um vetor temporário para armazenar o registro
     char temp[tamanho_registro + 1];
-    int indice = 0;
 
     // Copia a quantidade de chaves (int, 3 bytes)
-    sprintf(temp + indice, "%03d", no.qtd_chaves);
-    indice += 3;
+    sprintf(temp, "%03d", no.qtd_chaves);
 
     // Loop para recuperar as chaves (0 a 'btree_order-1')
     for (int i = 0; i < btree_order - 1; i++) {
-        strncpy(temp + indice, no.chaves[i], t->tam_chave);
-        indice += t->tam_chave;
+        strncat(temp, no.chaves[i], t->tam_chave);
     }
 
     // Indica se a página (nó) é uma folha
-    temp[indice] = no.folha ? 'T' : 'F';
-    indice++;
-
+    if (no.folha) strcat(temp, "T"); 
+    else strcat(temp, "F");
+    
     // Loop para recuperar os filhos
+    char rrn[4];
     for (int i = 0; i < btree_order; i++) {
         if (no.filhos[i] == -1) {
-            strncpy(temp + indice, "***", 4);
+            strncat(temp, "***", 4);
         } else {
-            sprintf(temp + indice, "%03d", no.filhos[i]);
+            sprintf(rrn, "%03d", no.filhos[i]);
+            strcat(temp, rrn);
         }
-        indice += 3;
     }
 
     // Copia o registro no arquivo da árvore
@@ -2164,21 +2266,17 @@ void btree_write(btree_node no, btree *t) {
  */
 btree_node btree_node_malloc(btree *t) {
 	btree_node no;
-
-	no.this_rrn = t->qtd_nos;
-
-	no.qtd_chaves = 0;
-
-	char *aux = malloc (sizeof (char) * (btree_order-1) * (t->tam_chave)); //vetor contíguo para permitir uso de algumas funções da stdlib
-	memset (aux, 0, (btree_order-1) * (t->tam_chave));
-	no.chaves = malloc (sizeof (void*) * (btree_order-1));
+    
+	no.chaves = malloc (sizeof (char*) * (btree_order-1));
 	for (int i = 0; i < btree_order-1; i++) {
-		no.chaves[i] = (aux + i * (t->tam_chave));
+		no.chaves[i] = malloc(t->tam_chave+1);
+        no.chaves[i][0] = '\0';
 	}
 
-	no.folha = true;
 	no.filhos = malloc (sizeof(int) * btree_order);
-	memset (no.filhos, -1, sizeof(int) * btree_order);
+    for (int i = 0; i < btree_order; ++i) {
+        no.filhos[i] = -1;
+    }
 
 	return no;
 }
@@ -2190,12 +2288,11 @@ btree_node btree_node_malloc(btree *t) {
  * @param no Nó para o qual o espaço alocado deverá ser librerado;
  */
 void btree_node_free (btree_node no) {
-	if (*no.chaves)
-		free (*no.chaves);
-	if (no.chaves)
-		free (no.chaves);
-	if (no.filhos)
-		free (no.filhos);
+	for(int i=0; i < btree_order - 1; ++i) {
+		free (no.chaves[i]);
+    }
+    free (no.chaves);
+    free (no.filhos);
 }
 
 
