@@ -26,6 +26,7 @@
  * Dica: consulte sobre as funções strncmp() e strnlen(). Muito provavelmente, você vai querer utilizá-las no código.
  * */
 
+/*Algumas coisas eu reutilizei no trabalho passado, oq ajudou muito*/
 /* Função de comparação entre chaves do índice jogadores_idx */
 int order_jogadores_idx(const void *key, const void *elem) {
 	return strncmp(key, elem, TAM_ID_JOGADOR-1);
@@ -467,9 +468,12 @@ bool exibir_btree_jogadores(char *chave) {
 }
 
 bool exibir_btree_kits(char *chave) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_kits()");
-	return false;
+    char num[5];
+    memset(num, 0, 5);
+    memcpy(num, chave + TAM_ID_KIT - 1, 4);
+
+    int rrn = strtol(num, NULL, 10);
+    return exibir_kit(rrn);
 }
 
 bool exibir_btree_partidas(char *chave) {
@@ -482,15 +486,41 @@ bool exibir_btree_partidas(char *chave) {
 }
 
 bool exibir_btree_preco_kit(char *chave) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_preco_kit()");
-	return false;
+    char id_kit[4];
+    memset(id_kit, 0, 4);
+    memcpy(id_kit, chave + TAM_FLOAT_NUMBER - 1, 3);
+
+    char resultado[TAM_CHAVE_KITS_IDX];
+    memset(resultado, 0, TAM_CHAVE_KITS_IDX);
+
+    bool encontrado = btree_search(resultado, false, id_kit, kits_idx.rrn_raiz, &kits_idx);
+    if (!encontrado) {
+        return false;
+    }
+    char num[5];
+    memset(num, 0, 5);
+    memcpy(num, resultado + TAM_ID_KIT - 1, 4);
+    int rrn = strtol(num, NULL, 10);
+    return exibir_kit(rrn);
 }
 
 bool exibir_btree_data_partida(char *chave) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "exibir_btree_data_partida()");
-	return false;
+    char id_partida[9];
+    memset(id_partida, 0, 9);
+    memcpy(id_partida, chave + TAM_ID_PARTIDA - 1, 8);
+
+    char resultado[TAM_CHAVE_PARTIDAS_IDX];
+    memset(resultado, 0, TAM_CHAVE_PARTIDAS_IDX);
+
+    bool encontrado = btree_search(resultado, false, id_partida, partidas_idx.rrn_raiz, &partidas_idx);
+    if (!encontrado) {
+        return false;
+    }
+    char num[5];
+    memset(num, 0, 5);
+    memcpy(num, resultado + TAM_ID_PARTIDA - 1, 4);
+    int rrn = strtol(num, NULL, 10);
+    return exibir_partida(rrn);
 }
 
 
@@ -539,17 +569,16 @@ void remover_jogador_menu(char *id_jogador) {
         return;
     }
 
-    // Recupera o jogador no arquivo
+    // Recuperando o jogador no arquivo
     int rrn_jogador = atoi(chave_jogador + TAM_ID_JOGADOR - 1);
     Jogador jogador = recuperar_registro_jogador(rrn_jogador);
 
-    // Marca o jogador como excluído e escreve no arquivo
+    // Marcando o jogador como excluído e escreve no arquivo
     jogador.id_jogador[0] = '*';
     escrever_registro_jogador(jogador, rrn_jogador);
 
-    // Remove do índice de jogadores
+    // Removendo do índice de jogadores
     btree_delete(chave_jogador, &jogadores_idx);
-
     printf(SUCESSO);
 }
 
@@ -562,26 +591,26 @@ void adicionar_saldo_menu(char *id_jogador, double valor) {
 void adicionar_saldo(char *id_jogador, double valor, bool flag) {
     char result[TAM_CHAVE_JOGADORES_IDX + 1];
 
-    // Verifica se o jogador está na árvore de jogadores
+    // Verificando se o jogador está na árvore de jogadores
     if (!btree_search(result, false, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx)) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
         return;
     }
 
-    // Verifica se o valor a ser inserido é menor ou igual a zero
+    // Verificando se o valor a ser inserido é menor ou igual a zero
     if (valor <= 0) {
         printf(ERRO_VALOR_INVALIDO);
         return;
     }
 
-    // Recupera o jogador
+    // Recuperando o jogador
     int rrn = atoi(result + TAM_ID_JOGADOR);
     Jogador j = recuperar_registro_jogador(rrn);
 
-    // Atualiza o saldo
+    // Atualizando o saldo
     j.saldo += valor;
 
-    // Escreve o registro atualizado
+    // Escrevendo o registro atualizado
     escrever_registro_jogador(j, rrn);
 
     printf(SUCESSO);
@@ -611,14 +640,13 @@ void cadastrar_kit_menu(char *nome, char *poder, double preco) {
 
     // Incrementando a quantidade de registros de kits
     qtd_registros_kits++;
-
     // Exibindo a mensagem de sucesso
     printf(SUCESSO);
 }
 
 
 void comprar_kit_menu(char *id_jogador, char *id_kit) {
-    // Cria duas chaves para recuperar 'jogador' e 'kit' durante a busca
+    // Cria duas chaves para recuperar jogador e kit durante a busca
     char chave_jogador[TAM_CHAVE_JOGADORES_IDX + 1];
     char chave_kit[TAM_CHAVE_KITS_IDX + 1];
     sprintf(chave_jogador, "%s", id_jogador);
@@ -638,28 +666,27 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
         return;
     }
 
-    // Cria dois inteiros para recuperar o rrn
+    // Criando dois inteiros para recuperar o rrn
     int rrn_jogador = atoi(chave_jogador + TAM_ID_JOGADOR - 1);
     int rrn_kit = atoi(chave_kit + TAM_ID_KIT - 1);
 
-    // Recupera os registros usando o rrn
+    // Recuperando os registros usando o rrn
     Jogador jogador = recuperar_registro_jogador(rrn_jogador);
     Kit kit = recuperar_registro_kit(rrn_kit);
 
-    // Checa se o valor do kit é maior que o saldo do jogador
+    // Checagem se o valor do kit é maior que o saldo do jogador
     if (jogador.saldo < kit.preco) {
         printf(ERRO_SALDO_NAO_SUFICIENTE);
         return;
     }
 
-    // Verifica se o jogador já possui o kit
+    // Verificand se o jogador já possui o kit
     for (int i = 0; i < QTD_MAX_KITS; i++) {
         if (strcmp(jogador.kits[i], id_kit) == 0) {
             printf(ERRO_KIT_REPETIDO, jogador.id_jogador, kit.nome);
             return;
         }
     }
-
     // Atribui o novo kit ao jogador
     for (int i = 0; i < QTD_MAX_KITS; i++) {
         if (jogador.kits[i][0] == '\0') {
@@ -676,7 +703,6 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
     char kit_maiusculo[TAM_MAX_NOME_KIT];
     strupr(strcpy(kit_maiusculo, kit.nome));
     inverted_list_insert(kit_maiusculo, jogador.id_jogador, &jogador_kits_idx);
-
     printf(SUCESSO);
 }
 
@@ -781,7 +807,6 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
     btree_insert(chave_data, &data_partida_idx);
 
     qtd_registros_partidas++;
-
     printf(SUCESSO);
 }
 
@@ -1008,14 +1033,17 @@ void imprimir_data_partida_idx_menu() {
 
 
 void imprimir_jogador_kits_secundario_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_jogador_kits_secundario_idx_menu()");
+    if (jogador_kits_idx.qtd_registros_secundario == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s", jogador_kits_idx.arquivo_secundario);
 }
 
-
 void imprimir_jogador_kits_primario_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_jogador_kits_primario_idx_menu()");
+    if (jogador_kits_idx.qtd_registros_primario == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s", jogador_kits_idx.arquivo_primario);
 }
 
 // Utilizando  a lógica do trabalho anterior como base
