@@ -1489,9 +1489,9 @@ void btree_insert(char *chave, btree *t) {
         nova_raiz.this_rrn = t->qtd_nos++;
         nova_raiz.qtd_chaves = 1;
         nova_raiz.folha = true;
-        nova_raiz.chaves[0] = strdup(chave);
+        strncpy(nova_raiz.chaves[0], chave, t->tam_chave);
         for (int i = 1; i < btree_order - 1; i++) {
-            nova_raiz.chaves[i] = strdup(str);
+            strncpy(nova_raiz.chaves[i], str, t->tam_chave);
         }
         nova_raiz.filhos[0] = -1;
         nova_raiz.filhos[1] = -1;
@@ -1508,9 +1508,9 @@ void btree_insert(char *chave, btree *t) {
         btree_node nova_raiz = btree_node_malloc(t);
         nova_raiz.this_rrn = t->qtd_nos++;
         nova_raiz.qtd_chaves = 1;
-        nova_raiz.chaves[0] = strdup(promovido.chave_promovida);
+        strncpy(nova_raiz.chaves[0], promovido.chave_promovida, t->tam_chave);
         for (int i = 1; i < btree_order - 1; i++) {
-            nova_raiz.chaves[i] = strdup(str);
+            strncpy(nova_raiz.chaves[i], str, t->tam_chave);
         }
         nova_raiz.filhos[0] = t->rrn_raiz;
         if(nova_raiz.filhos[0] == -1) {
@@ -1561,12 +1561,12 @@ promovido_aux btree_insert_aux(char *chave, int rrn_atual, btree *t) {
             if (indice < no_atual.qtd_chaves) {
                 // Move todas as chaves e seus filhos para a direita
                 for (int i = no_atual.qtd_chaves; i > indice; i--) {
-                    no_atual.chaves[i] = no_atual.chaves[i - 1];
+                    strcpy(no_atual.chaves[i], no_atual.chaves[i - 1]);
                     no_atual.filhos[i + 1] = no_atual.filhos[i];
                 }
             }
             // Insere na posição do índice
-            no_atual.chaves[indice] = strdup(promovido_filho.chave_promovida);
+            strncpy(no_atual.chaves[indice], promovido_filho.chave_promovida, t->tam_chave);
             no_atual.filhos[indice + 1] = promovido_filho.filho_direito;
             no_atual.qtd_chaves++;
             // Escreve a chave
@@ -1605,49 +1605,49 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
     if (i <= meio) {
         // Inserção na página antiga
         for (int j = meio; j < btree_order - 1; j++) {
-            novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
+            strcpy(novo_no.chaves[novo_no.qtd_chaves], node->chaves[j]);
             novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
             novo_no.qtd_chaves++;
-            node->chaves[j] = strdup(str);
+            strncpy(node->chaves[j], str, t->tam_chave);
             node->filhos[j + 1] = -1;
             node->qtd_chaves--;
         }
 
         for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
-            novo_no.chaves[j] = strdup(str);
+            strncpy(novo_no.chaves[j], str, t->tam_chave);
             novo_no.filhos[j + 1] = -1;
         }
 
         for (int j = btree_order - 2; j > i; j--) {
-            node->chaves[j] = node->chaves[j - 1];
+            strcpy(node->chaves[j], node->chaves[j - 1]);
             node->filhos[j + 1] = node->filhos[j];
         }
 
-        node->chaves[i] = strdup(promo.chave_promovida);
+        strcpy(node->chaves[i], promo.chave_promovida);
         node->filhos[i + 1] = promo.filho_direito;
         node->qtd_chaves++;
     } else {
         // Inserção na página nova
         for (int j = meio + 1; j < btree_order - 1; j++) {
-            novo_no.chaves[novo_no.qtd_chaves] = node->chaves[j];
+            strcpy(novo_no.chaves[novo_no.qtd_chaves], node->chaves[j]);
             novo_no.filhos[novo_no.qtd_chaves + 1] = node->filhos[j + 1];
             novo_no.qtd_chaves++;
-            node->chaves[j] = strdup(str);
+            strncpy(node->chaves[j], str, t->tam_chave);
             node->filhos[j + 1] = -1;
             node->qtd_chaves--;
         }
 
         for (int j = novo_no.qtd_chaves; j < btree_order - 1; j++) {
-            novo_no.chaves[j] = strdup(str);
+            strncpy(novo_no.chaves[j], str, t->tam_chave);
             novo_no.filhos[j + 1] = -1;
         }
 
         for (int j = novo_no.qtd_chaves; j > i - meio - 1; j--) {
-            novo_no.chaves[j] = novo_no.chaves[j - 1];
+            strcpy(novo_no.chaves[j], novo_no.chaves[j - 1]);
             novo_no.filhos[j + 1] = novo_no.filhos[j];
         }
 
-        novo_no.chaves[i - meio - 1] = strdup(promo.chave_promovida);
+        strncpy(novo_no.chaves[i - meio - 1], promo.chave_promovida, t->tam_chave);
         novo_no.filhos[i - meio] = promo.filho_direito;
         novo_no.qtd_chaves++;
     }
@@ -1657,7 +1657,7 @@ promovido_aux btree_divide(promovido_aux promo, btree_node *node, int i, btree *
     p.filho_direito = novo_no.this_rrn;
 
     novo_no.filhos[0] = node->filhos[meio + 1];
-    node->chaves[meio] = strdup(str);
+    strncpy(node->chaves[meio], str, t->tam_chave);
     node->filhos[meio + 1] = -1;
     node->qtd_chaves--;
 
