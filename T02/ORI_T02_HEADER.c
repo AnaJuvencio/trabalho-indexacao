@@ -54,9 +54,7 @@ int order_preco_kit_idx(const void *key, const void *elem){
 
 /* Função de comparação entre chaves do índice data_partida_idx */
 int order_data_partida_idx(const void *key, const void *elem) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "order_data_partida_idx()");
-	return -1;
+	return strncmp(key, elem, TAM_CHAVE_DATA_PARTIDA_IDX);
 }
 
 /* Função de comparação entre chaves do índice jogador_kits_idx */
@@ -497,7 +495,7 @@ bool exibir_btree_preco_kit(char *chave) {
 bool exibir_btree_data_partida(char *chave) {
     char id_partida[9];
     memset(id_partida, 0, 9);
-    memcpy(id_partida, chave + TAM_ID_PARTIDA - 1, 8);
+    memcpy(id_partida, chave + TAM_DATETIME - 1, 8);
 
     char resultado[TAM_CHAVE_PARTIDAS_IDX];
     memset(resultado, 0, TAM_CHAVE_PARTIDAS_IDX);
@@ -884,9 +882,8 @@ void listar_jogadores_kits_menu(char *kit){
 void listar_kits_compra_menu(char *id_jogador) {
     char str[TAM_CHAVE_JOGADORES_IDX];
     memset(str, 0, TAM_CHAVE_JOGADORES_IDX);
-
-    printf(REGS_PERCORRIDOS);
-    bool found = btree_search(str, true, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+    
+    bool found = btree_search(str, false, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
     printf("\n");
 
     if (!found) {
@@ -925,7 +922,7 @@ void listar_partidas_periodo_menu(char *chave_inicio, char *chave_fim) {
     if (partidas_idx.qtd_nos == 0) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
     } else {
-        btree_print_in_order(chave_inicio, chave_fim, exibir_btree_partidas, partidas_idx.rrn_raiz, &partidas_idx);
+        btree_print_in_order(chave_inicio, chave_fim, exibir_btree_data_partida, data_partida_idx.rrn_raiz, &data_partida_idx);
     }
 }
 
@@ -1165,18 +1162,20 @@ int busca_binaria(const void *key, const void *base0, size_t nmemb, size_t size,
  * @param t Ponteiro para a Lista Invertida na qual serão inseridas as chaves.
  */
 void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted_list *t) {
+    int reg_secundario = t->tam_chave_secundaria+TAM_RRN_REGISTRO;
+    int reg_primario = t->tam_chave_primaria+TAM_RRN_REGISTRO;
     int indice_secundario;
     bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, chave_secundaria, t);
 
     if (!chave_encontrada) {
         // Inserindo a chave secundária no índice secundário
         // fseek(t->arquivo_secundario, t->qtd_registros_secundario * (t->tam_chave_secundaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_secundario + t->qtd_registros_secundario*(t->tam_chave_secundaria+TAM_RRN_REGISTRO), "%s%04d", chave_secundaria, t->qtd_registros_primario);
+        sprintf(t->arquivo_secundario + t->qtd_registros_secundario*reg_secundario, "%s%04d", chave_secundaria, t->qtd_registros_primario);
         // Incrementando a quantidade de registros secundários
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_primario, "%s%04d", chave_primaria, -1);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
         // Ordenando o índice secundário
@@ -1187,10 +1186,10 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
         inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
         // Inserindo o novo jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_secundario, "%s%04d", chave_primaria, -1);
         // Atualizando o próximo índice do último jogador na lista encadeada
         // fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*(t->tam_chave_primaria+TAM_RRN_REGISTRO), "%04d", t->qtd_registros_primario);
+        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_primario + t->tam_chave_primaria, "%04d", t->qtd_registros_primario);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
     }
@@ -1267,119 +1266,66 @@ bool inverted_list_secondary_search(int *result, bool exibir_caminho, char *chav
  * @return Indica a quantidade de chaves encontradas.
  */
 int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX], bool exibir_caminho, int indice, int *indice_final, inverted_list *t) {
-    // int indice_atual = indice;
-    // int count = 0;
-    // char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
-    // int proximo_indice;
+    unsigned int quantidade_chaves_recuperadas = 0; // variável que indica a quantidade de chaves recuperadas
+    char indice_temp[TAM_RRN_REGISTRO+1]; // variável temporária para armazenar o índice da chave
+    sprintf(indice_temp, "%04d", indice); // formata o índice para um número de 4 dígitos
 
-    // while (indice_atual != -1) {
-    //     // Calcula o offset no arquivo primário
-    //     long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
+    // Recupera a primeira chave
+    if(result) 
+        strncpy(result[quantidade_chaves_recuperadas], (t->arquivo_primario + (atoi(indice_temp) * (TAM_ID_JOGADOR-1 + TAM_RRN_REGISTRO))), t->tam_chave_primaria);
+    quantidade_chaves_recuperadas++; // Incrementa a quantidade de chaves recuperadas
 
-    //     // Move o ponteiro do arquivo para o offset calculado
-    //     fseek(t->arquivo_primario, offset, SEEK_SET);
-
-    //     // Lê a chave primária e o próximo índice
-    //     fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
-    //     chave_primaria[t->tam_chave_primaria] = '\0';
-    //     fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
-
-    //     if (exibir_caminho) {
-    //         printf("%d ", indice_atual);
-    //     }
-
-    //     if (result != NULL) {
-    //         strcpy(result[count], chave_primaria);
-    //         count++;
-    //     }
-
-    //     if (proximo_indice == -1) {
-    //         *indice_final = indice_atual;
-    //         return count;
-    //     }
-
-    //     indice_atual = proximo_indice;
-    // }
-
-    // return count;// int indice_atual = indice;
-    // int count = 0;
-    // char chave_primaria[TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX + 1];
-    // int proximo_indice;
-
-    // while (indice_atual != -1) {
-    //     // Calcula o offset no arquivo primário
-    //     long offset = indice_atual * (t->tam_chave_primaria + sizeof(int));
-
-    //     // Move o ponteiro do arquivo para o offset calculado
-    //     fseek(t->arquivo_primario, offset, SEEK_SET);
-
-    //     // Lê a chave primária e o próximo índice
-    //     fread(chave_primaria, sizeof(char), t->tam_chave_primaria, t->arquivo_primario);
-    //     chave_primaria[t->tam_chave_primaria] = '\0';
-    //     fread(&proximo_indice, sizeof(int), 1, t->arquivo_primario);
-
-    //     if (exibir_caminho) {
-    //         printf("%d ", indice_atual);
-    //     }
-
-    //     if (result != NULL) {
-    //         strcpy(result[count], chave_primaria);
-    //         count++;
-    //     }
-
-    //     if (proximo_indice == -1) {
-    //         *indice_final = indice_atual;
-    //         return count;
-    //     }
-
-    //     indice_atual = proximo_indice;
-    // }
-
-    // return count;
-
-    int num_chaves_encontradas = 0;
-    char rrn[TAM_RRN_REGISTRO+1];
-    char prox_indice[TAM_RRN_REGISTRO+1];
-    sprintf(rrn, "%04d", indice);
-    // Exibindo o caminho inicial
-    if (exibir_caminho) {
-        printf(REGS_PERCORRIDOS);
-        printf(" %d", atoi(rrn));
+    // Exibe o caminho percorrido até a primeira chave (caso solicitado)
+    if(exibir_caminho) {
+        printf(REGS_PERCORRIDOS); // Exibe a mensagem de registros percorridos
+        printf(" %d", atoi(indice_temp)); // Exibe o índice da chave
     }
-    // Recuperando o primeiro corredor
-    if (result != NULL) {
-        strncpy(result[num_chaves_encontradas], t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), t->tam_chave_primaria);
-    }
-    num_chaves_encontradas++;
-    // Atualizando o índice final
-    if (indice_final != NULL) {
-        *indice_final = indice;
-    }
-    // proximo indice
-    strncpy(prox_indice, t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1) + t->tam_chave_primaria, TAM_RRN_REGISTRO);
-    // Percorrendo a lista encadeada
-    while (atoi(prox_indice) != -1) {
-        strcpy(rrn, prox_indice);
-        // Exibir o caminho
-        if (exibir_caminho) {
-            printf(" %d", atoi(rrn));
+
+    // Atualiza o índice temporário com o próximo índice
+    strncpy(indice_temp, (t->arquivo_primario + (atoi(indice_temp) * (TAM_ID_JOGADOR-1 + TAM_RRN_REGISTRO)) + t->tam_chave_primaria), TAM_RRN_REGISTRO);
+
+    // Verifica se há apenas uma chave a ser recuperada e, em caso afirmativo, define o índice final
+    if(atoi(indice_temp) == -1) {
+        if(indice_final != NULL) 
+            (*indice_final) = indice; // Define o índice final se for o último
+
+        // Pula uma linha caso o caminho tenha sido solicitado
+        if(exibir_caminho) {
+            printf("\n");
         }
-        // Recuperando o corredor
-        if (result != NULL) {
-            strncpy(result[num_chaves_encontradas], t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1), t->tam_chave_primaria);
-        }
-        num_chaves_encontradas++;
-        // Atualizando o índice final
-        if (indice_final != NULL) {
-            *indice_final = atoi(rrn);
-        }
-        strncpy(prox_indice, t->arquivo_primario + atoi(rrn)*(t->tam_chave_primaria+TAM_RRN_REGISTRO-1) + t->tam_chave_primaria, TAM_RRN_REGISTRO);
+
+        return quantidade_chaves_recuperadas; // Retorna a quantidade de chaves recuperadas (apenas uma neste caso)
     }
-    // Exibindo nova linha
-    if (exibir_caminho) {
+
+    // Recupera todas as outras chaves
+    while(atoi(indice_temp) != -1) {
+        // Adiciona a chave recuperada à lista de chaves
+        if(result) 
+            strncpy(result[quantidade_chaves_recuperadas], (t->arquivo_primario + (atoi(indice_temp) * (TAM_ID_JOGADOR-1 + TAM_RRN_REGISTRO))), t->tam_chave_primaria);
+        quantidade_chaves_recuperadas++; // Incrementa a quantidade de chaves recuperadas
+
+        // Exibe o caminho (caso solicitado)
+        if(exibir_caminho) {
+            printf(" %d", atoi(indice_temp)); // Exibe o índice da chave
+        }
+
+        // Atualiza o índice temporário com o próximo índice
+        strncpy(indice_temp, (t->arquivo_primario + (atoi(indice_temp) * (TAM_ID_JOGADOR-1 + TAM_RRN_REGISTRO)) + t->tam_chave_primaria), TAM_RRN_REGISTRO);
+
+        // Verifica se chegou à última chave
+        if(atoi(indice_temp) == -1) { 
+            if(indice_final) 
+                (*indice_final) = atoi(indice_temp); // Define o índice final
+        }
+    }
+
+    // Pula uma linha caso o caminho tenha sido solicitado
+    if(exibir_caminho) {
         printf("\n");
     }
-    return num_chaves_encontradas;
+
+    return quantidade_chaves_recuperadas; // Retorna a quantidade total de chaves recuperadas
+
 }
 
 
