@@ -800,9 +800,110 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
 }
 
 
-void recompensar_vencedor_menu (char *data_inicio, char *data_fim, double premio) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "recompensar_vencedor_menu()");
+void recompensar_vencedor_menu(char *data_inicio, char *data_fim, double premio) {
+    Info_Jogador info_jogadores[MAX_REGISTROS];
+    int qtd_jogadores = 0;
+
+    // Recuperando as partidas dentro do período
+    char *result[MAX_REGISTROS];
+    int qtd_partidas = btree_search_in_order(result, data_inicio, data_fim, 0, data_partida_idx.rrn_raiz, &data_partida_idx);
+
+    for (int i = 0; i < qtd_partidas; i++) {
+        // Recuperando o id_partida de result
+        char id_partida[TAM_ID_PARTIDA + 1];
+        strncpy(id_partida, result[i] + TAM_DATETIME - 1, TAM_ID_PARTIDA);
+        id_partida[TAM_ID_PARTIDA] = '\0';
+
+        // Buscando a partida pelo id
+        char partida_result[TAM_CHAVE_PARTIDAS_IDX];
+        bool encontrado = btree_search(partida_result, false, id_partida, partidas_idx.rrn_raiz, &partidas_idx);
+        if (!encontrado) {
+            continue;
+        }
+
+        int rrn_partida = strtol(partida_result + TAM_CHAVE_PARTIDAS_IDX - TAM_RRN_REGISTRO, NULL, 10);
+        Partida partida = recuperar_registro_partida(rrn_partida);
+
+        // Recuperando as informações de cada jogador dentro da partida
+        for (int j = 0; j < QTD_MAX_JOGADORES; j++) {
+            char id_jogador[TAM_ID_JOGADOR];
+            strncpy(id_jogador, partida.id_jogadores + j * (TAM_ID_JOGADOR - 1), TAM_ID_JOGADOR - 1);
+            id_jogador[TAM_ID_JOGADOR - 1] = '\0';
+
+            // Criando a chave para busca no índice de resultados
+            char chave_resultado[TAM_CHAVE_RESULTADOS_IDX];
+            snprintf(chave_resultado, TAM_CHAVE_RESULTADOS_IDX, "%s%s", id_jogador, partida.id_partida);
+
+            // Recuperando o resultado existente
+            char resultado_result[TAM_CHAVE_RESULTADOS_IDX];
+            encontrado = btree_search(resultado_result, false, chave_resultado, resultados_idx.rrn_raiz, &resultados_idx);
+            if (!encontrado) {
+                continue;
+            }
+
+            int rrn_resultado = strtol(resultado_result + TAM_CHAVE_RESULTADOS_IDX - TAM_RRN_REGISTRO, NULL, 10);
+            Resultado resultado = recuperar_registro_resultado(rrn_resultado);
+
+            // Verificando se o jogador está na lista
+            bool jogador_encontrado = false;
+            for (int k = 0; k < qtd_jogadores; k++) {
+                if (strcmp(info_jogadores[k].id_jogador, resultado.id_jogador) == 0) {
+                    if (resultado.colocacao == 1) info_jogadores[k].vitorias++;
+                    info_jogadores[k].eliminacoes += resultado.eliminacoes;
+
+                    int tempo_sobrevivencia = atoi(info_jogadores[k].sobrevivencia) + atoi(resultado.sobrevivencia);
+                    sprintf(info_jogadores[k].sobrevivencia, "%06d", tempo_sobrevivencia);
+
+                    jogador_encontrado = true;
+                    break;
+                }
+            }
+
+            // Novo jogador
+            if (!jogador_encontrado) {
+                strcpy(info_jogadores[qtd_jogadores].id_jogador, resultado.id_jogador);
+                if (resultado.colocacao == 1) info_jogadores[qtd_jogadores].vitorias = 1;
+                info_jogadores[qtd_jogadores].eliminacoes = resultado.eliminacoes;
+                strcpy(info_jogadores[qtd_jogadores].sobrevivencia, resultado.sobrevivencia);
+
+                qtd_jogadores++;
+            }
+        }
+    }
+
+    // Ordenando o vetor info_jogadores
+    qsort(info_jogadores, qtd_jogadores, sizeof(Info_Jogador), order_info_jogador);
+
+    // Recuperando o jogador pelo Id usando busca binária
+    char jogador_result[TAM_CHAVE_JOGADORES_IDX];
+    bool encontrado = btree_search(jogador_result, false, info_jogadores[0].id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+    int rrn_jogador = encontrado ? strtol(jogador_result + TAM_CHAVE_JOGADORES_IDX - TAM_RRN_REGISTRO, NULL, 10) : -1;
+
+    if (rrn_jogador == -1) {
+        int indice_ganhador = 0;
+        for (int i = 1; i < qtd_jogadores; i++) {
+            encontrado = btree_search(jogador_result, false, info_jogadores[i].id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
+            rrn_jogador = encontrado ? strtol(jogador_result + TAM_CHAVE_JOGADORES_IDX - TAM_RRN_REGISTRO, NULL, 10) : -1;
+
+            // Checa se o jogador pode receber o prêmio
+            if (rrn_jogador != -1) {
+                indice_ganhador = i;
+                break;
+            }
+        }
+
+        adicionar_saldo(info_jogadores[indice_ganhador].id_jogador, premio, false);
+        Jogador jogador = recuperar_registro_jogador(rrn_jogador);
+        strcpy(jogador.premio, data_fim);
+        escrever_registro_jogador(jogador, rrn_jogador);
+        printf(ERRO_JOGADOR_REMOVIDO, premio, jogador.apelido, info_jogadores[indice_ganhador].vitorias, info_jogadores[indice_ganhador].eliminacoes);
+    } else {
+        adicionar_saldo(info_jogadores[0].id_jogador, premio, false);
+        Jogador jogador = recuperar_registro_jogador(rrn_jogador);
+        strcpy(jogador.premio, data_fim);
+        escrever_registro_jogador(jogador, rrn_jogador);
+        printf(CONCEDER_PREMIO, jogador.apelido, info_jogadores[0].vitorias, info_jogadores[0].eliminacoes, premio);
+    }
 }
 
 
@@ -2060,9 +2161,39 @@ bool btree_binary_search(int *result, bool exibir_caminho, char* chave, btree_no
  * @return Indica a quantidade de chaves válidas.
  */
 int btree_search_in_order(char **result, char *chave_inicio, char *chave_fim, int qtd, int rrn, btree *t) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "btree_search_in_order()");
-	return 0;
+    // Checa se achou uma folha
+    if (rrn == -1) {
+        return qtd;
+    }
+
+    // Lê a página atual
+    btree_node no_atual = btree_read(rrn, t);
+
+    // Checa se ela não é uma folha (não deveria ser, mas por precaução...)
+    if (!no_atual.folha) {
+        qtd = btree_search_in_order(result, chave_inicio, chave_fim, qtd, no_atual.filhos[0], t);
+    }
+
+    // Loop para recuperar todas as chaves da página atual
+    for (int i = 0; i < no_atual.qtd_chaves; i++) {
+        // Verifica se 'inicio' e 'fim' são nulas e se a chave está dentro do período
+        if ((chave_inicio == NULL || strcmp(no_atual.chaves[i], chave_inicio) >= 0) &&
+            (chave_fim == NULL || strcmp(no_atual.chaves[i], chave_fim) <= 0)) {
+            result[qtd] = strdup(no_atual.chaves[i]);
+            qtd++;
+        }
+
+        // Checa se o nó não é folha
+        if (!no_atual.folha) {
+            qtd = btree_search_in_order(result, chave_inicio, chave_fim, qtd, no_atual.filhos[i + 1], t);
+        }
+    }
+
+    // Libera o nó
+    btree_node_free(no_atual);
+
+    // Retorna 'qtd' atual
+    return qtd;
 }
 
 
