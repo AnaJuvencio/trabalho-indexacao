@@ -873,11 +873,41 @@ void listar_jogadores_id_menu() {
 }
 
 
-void listar_jogadores_kits_menu(char *kit){
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "listar_jogadores_kits_menu()");
-}
+void listar_jogadores_kits_menu(char *kit) {
+    int indice_secundario;
+    // Verificando se há registros de jogadores
+    if (qtd_registros_jogadores == 0) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+    // Buscando o kit no índice secundário
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, strupr(kit), &jogador_kits_idx);
+    if (!chave_encontrada) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+        return;
+    }
+    // Recuperando todos os jogadores que possuem o kit
+    int indice_final;
+    char result[qtd_registros_jogadores][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX];
+    int num_jogadores = inverted_list_primary_search(result, true, indice_secundario, &indice_final, &jogador_kits_idx);
 
+    // Ordenando os resultados
+    qsort(result, num_jogadores, TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX, order_jogador_kit_idx);
+
+    // Exibindo os jogadores encontrados
+    for (int i = 0; i < num_jogadores; i++) {
+        char chave[TAM_ID_JOGADOR + 1];
+        strncpy(chave, result[i], TAM_ID_JOGADOR);
+        chave[TAM_ID_JOGADOR] = '\0';
+        int rrn_jogador = busca_binaria(chave, jogadores_idx.arquivo, qtd_registros_jogadores, sizeof(jogadores_idx), order_jogador_kit_idx, false, -1);
+        if (rrn_jogador >= 0) {
+            exibir_jogador(rrn_jogador);
+        }
+    }
+    if (num_jogadores == 0) {
+        printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
+    }
+}
 
 void listar_kits_compra_menu(char *id_jogador) {
     char str[TAM_CHAVE_JOGADORES_IDX];
