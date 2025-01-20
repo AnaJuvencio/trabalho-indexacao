@@ -44,7 +44,7 @@ int order_partidas_idx(const void *key, const void *elem) {
 
 /* Função de comparação entre chaves do índice resultados_idx */
 int order_resultados_idx(const void *key, const void *elem) {
-	return strncmp(key, elem, TAM_CHAVE_RESULTADOS_IDX);
+	return strncmp(key, elem, TAM_CHAVE_RESULTADOS_IDX-4);
 }
 
 /* Função de comparação entre chaves do índice preco_kit_idx */
@@ -59,15 +59,35 @@ int order_data_partida_idx(const void *key, const void *elem) {
 
 /* Função de comparação entre chaves do índice jogador_kits_idx */
 int order_jogador_kit_idx(const void *key, const void *elem) {
-	return strncmp(key, elem, TAM_CHAVE_JOGADOR_KIT_SECUNDARIO_IDX);
+	return strncmp(key, elem, TAM_CHAVE_JOGADOR_KIT_PRIMARIO_IDX);
 }
 
 /* Função de comparação entre vitórias, eliminacoes e tempo de sobrevivencia dos jogadores
  * Usada na função recompensar_vencedores_periodo; */
 int qsort_info_jogador(const void *a, const void *b) {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "qsort_info_jogador()");
-	return -1;
+	Info_Jogador *jogador_a = (Info_Jogador *)a;
+    Info_Jogador *jogador_b = (Info_Jogador *)b;
+    // Comparando as vitorias
+    if (jogador_a->vitorias > jogador_b->vitorias) {
+        return -1;
+    } else if (jogador_a->vitorias < jogador_b->vitorias) {
+        return 1;
+    }
+    // Comparando as eliminações
+    if (jogador_a->eliminacoes > jogador_b->eliminacoes) {
+        return -1;
+    } else if (jogador_a->eliminacoes < jogador_b->eliminacoes) {
+        return 1;
+    }
+    // Comparando o tempo de sobrevivência
+    int cmp_sobrevivencia = strcmp(jogador_a->sobrevivencia, jogador_b->sobrevivencia);
+    if (cmp_sobrevivencia > 0) {
+        return -1;
+    } else if (cmp_sobrevivencia < 0) {
+        return 1;
+    }
+    // Comparando o Id do jogador
+    return strcmp(jogador_a->id_jogador, jogador_b->id_jogador);
 }
 
 
@@ -602,7 +622,8 @@ void adicionar_saldo(char *id_jogador, double valor, bool flag) {
     // Escrevendo o registro atualizado
     escrever_registro_jogador(j, rrn);
 
-    printf(SUCESSO);
+    if (flag)
+        printf(SUCESSO);
 }
 
 void cadastrar_kit_menu(char *nome, char *poder, double preco) {
@@ -691,6 +712,7 @@ void comprar_kit_menu(char *id_jogador, char *id_kit) {
     // Atualiza a lista invertida
     char kit_maiusculo[TAM_MAX_NOME_KIT];
     strupr(strcpy(kit_maiusculo, kit.nome));
+    strpadright(kit_maiusculo, '#', TAM_MAX_NOME_KIT-1);
     inverted_list_insert(kit_maiusculo, jogador.id_jogador, &jogador_kits_idx);
     printf(SUCESSO);
 }
@@ -768,6 +790,7 @@ void executar_partida_menu(char *inicio, char *duracao, char *cenario, char *id_
         // Criando a chave para o índice de resultados
         char chave_resultado[TAM_CHAVE_RESULTADOS_IDX + 1];
         sprintf(chave_resultado, "%s%s%04d", resultado.id_jogador, resultado.id_partida, qtd_registros_resultados);
+        chave_resultado[TAM_CHAVE_RESULTADOS_IDX] = '\0';
         btree_insert(chave_resultado, &resultados_idx);
 
         qtd_registros_resultados++;
@@ -806,11 +829,13 @@ void recompensar_vencedor_menu(char *data_inicio, char *data_fim, double premio)
 
     // Recuperando as partidas dentro do período
     char *result[MAX_REGISTROS];
+    for (int i = 0; i < MAX_REGISTROS; i++)
+        result[i] = malloc(sizeof(char) * TAM_CHAVE_DATA_PARTIDA_IDX);
     int qtd_partidas = btree_search_in_order(result, data_inicio, data_fim, 0, data_partida_idx.rrn_raiz, &data_partida_idx);
 
     for (int i = 0; i < qtd_partidas; i++) {
         // Recuperando o id_partida de result
-        char id_partida[TAM_ID_PARTIDA + 1];
+        char id_partida[TAM_ID_PARTIDA];
         strncpy(id_partida, result[i] + TAM_DATETIME - 1, TAM_ID_PARTIDA);
         id_partida[TAM_ID_PARTIDA] = '\0';
 
@@ -831,8 +856,8 @@ void recompensar_vencedor_menu(char *data_inicio, char *data_fim, double premio)
             id_jogador[TAM_ID_JOGADOR - 1] = '\0';
 
             // Criando a chave para busca no índice de resultados
-            char chave_resultado[TAM_CHAVE_RESULTADOS_IDX];
-            snprintf(chave_resultado, TAM_CHAVE_RESULTADOS_IDX, "%s%s", id_jogador, partida.id_partida);
+            char chave_resultado[(TAM_ID_JOGADOR - 1) + (TAM_ID_PARTIDA - 1) + 1];
+            snprintf(chave_resultado, (TAM_ID_JOGADOR - 1) + (TAM_ID_PARTIDA - 1) + 1, "%s%s", id_jogador, partida.id_partida);
 
             // Recuperando o resultado existente
             char resultado_result[TAM_CHAVE_RESULTADOS_IDX];
@@ -872,7 +897,7 @@ void recompensar_vencedor_menu(char *data_inicio, char *data_fim, double premio)
     }
 
     // Ordenando o vetor info_jogadores
-    qsort(info_jogadores, qtd_jogadores, sizeof(Info_Jogador), order_info_jogador);
+    qsort(info_jogadores, qtd_jogadores, sizeof(Info_Jogador), qsort_info_jogador);
 
     // Recuperando o jogador pelo Id usando busca binária
     char jogador_result[TAM_CHAVE_JOGADORES_IDX];
@@ -982,7 +1007,7 @@ void listar_jogadores_kits_menu(char *kit) {
         return;
     }
     // Buscando o kit no índice secundário
-    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, strupr(kit), &jogador_kits_idx);
+    bool chave_encontrada = inverted_list_secondary_search(&indice_secundario, false, strpadright(strupr(kit), '#', TAM_MAX_NOME_KIT-1), &jogador_kits_idx);
     if (!chave_encontrada) {
         printf(AVISO_NENHUM_REGISTRO_ENCONTRADO);
         return;
@@ -997,12 +1022,15 @@ void listar_jogadores_kits_menu(char *kit) {
 
     // Exibindo os jogadores encontrados
     for (int i = 0; i < num_jogadores; i++) {
-        char chave[TAM_ID_JOGADOR + 1];
-        strncpy(chave, result[i], TAM_ID_JOGADOR);
-        chave[TAM_ID_JOGADOR] = '\0';
-        int rrn_jogador = busca_binaria(chave, jogadores_idx.arquivo, qtd_registros_jogadores, sizeof(jogadores_idx), order_jogador_kit_idx, false, -1);
-        if (rrn_jogador >= 0) {
-            exibir_jogador(rrn_jogador);
+        char str[TAM_CHAVE_JOGADORES_IDX];
+        memset(str, 0, TAM_CHAVE_JOGADORES_IDX);
+        btree_search(str, false, result[i], jogadores_idx.rrn_raiz, &jogadores_idx);
+        char num[5];
+        memset(num, 0, 5);
+        memcpy(num, str + TAM_ID_JOGADOR - 1, 4);
+
+        if (atoi(num) >= 0) {
+            exibir_jogador(atoi(num));
         }
     }
     if (num_jogadores == 0) {
@@ -1015,7 +1043,6 @@ void listar_kits_compra_menu(char *id_jogador) {
     memset(str, 0, TAM_CHAVE_JOGADORES_IDX);
     
     bool found = btree_search(str, false, id_jogador, jogadores_idx.rrn_raiz, &jogadores_idx);
-    printf("\n");
 
     if (!found) {
         printf(ERRO_REGISTRO_NAO_ENCONTRADO);
@@ -1028,22 +1055,29 @@ void listar_kits_compra_menu(char *id_jogador) {
         Jogador jogador = recuperar_registro_jogador(rrn);
 
         // Convertendo o saldo do jogador para string
-        char saldo_str[20];
-        sprintf(saldo_str, "%013.2f", jogador.saldo); // formato certo?
+        char saldo_str[TAM_CHAVE_PRECO_KIT_IDX+1]; saldo_str[0] = '\0';
+        sprintf(saldo_str, "%013.2f%03d", jogador.saldo, qtd_registros_kits);
+        char *result[MAX_REGISTROS];
+        for (int i = 0; i < MAX_REGISTROS; i++)
+            result[i] = malloc(sizeof(char) * TAM_CHAVE_PRECO_KIT_IDX);
+        int qtd_recuperada = btree_search_in_order(result, NULL, saldo_str, 0, preco_kit_idx.rrn_raiz, &preco_kit_idx);
 
         // Listando os kits que o jogador pode comprar
-        for (int i = 0; i < preco_kit_idx.qtd_nos; i++) {
-            btree_node node = btree_read(i, &preco_kit_idx);
-            for (int j = 0; j < node.qtd_chaves; j++) {
-                if (strcmp(node.chaves[j], saldo_str) <= 0) {
-                    char num_kit[5];
-                    memset(num_kit, 0, 5);
-                    memcpy(num_kit, node.chaves[j] + TAM_ID_KIT - 1, 4);
-                    int rrn_kit = strtol(num_kit, NULL, 10);
-                    exibir_kit(rrn_kit);
-                }
+        for (int i = 0; i < qtd_recuperada; i++) {
+            // Recuperando o id_partida de result
+            char id_kit[TAM_ID_KIT];
+            strncpy(id_kit, result[i] + TAM_FLOAT_NUMBER - 1, TAM_ID_KIT);
+            id_kit[TAM_ID_PARTIDA] = '\0';
+
+            // Buscando a partida pelo id
+            char kit_result[TAM_CHAVE_KITS_IDX];
+            bool encontrado = btree_search(kit_result, false, id_kit, kits_idx.rrn_raiz, &kits_idx);
+            if (!encontrado) {
+                continue;
             }
-            btree_node_free(node);
+
+            int rrn_kit = strtol(kit_result + TAM_CHAVE_KITS_IDX - TAM_RRN_REGISTRO, NULL, 10);
+            exibir_kit(rrn_kit);
         }
     }
 }
@@ -1135,8 +1169,10 @@ void imprimir_preco_kit_idx_menu() {
 
 
 void imprimir_data_partida_idx_menu() {
-	/*IMPLEMENTE A FUNÇÃO AQUI*/
-	printf(ERRO_NAO_IMPLEMENTADO, "imprimir_data_partida_idx_menu()");
+	if (data_partida_idx.qtd_nos == 0)
+        printf(ERRO_ARQUIVO_VAZIO);
+    else
+        printf("%s\n", ARQUIVO_DATA_PARTIDA_IDX);
 }
 
 
@@ -1144,14 +1180,14 @@ void imprimir_jogador_kits_secundario_idx_menu() {
     if (jogador_kits_idx.qtd_registros_secundario == 0)
         printf(ERRO_ARQUIVO_VAZIO);
     else
-        printf("%s", jogador_kits_idx.arquivo_secundario);
+        printf("%s\n", jogador_kits_idx.arquivo_secundario);
 }
 
 void imprimir_jogador_kits_primario_idx_menu() {
     if (jogador_kits_idx.qtd_registros_primario == 0)
         printf(ERRO_ARQUIVO_VAZIO);
     else
-        printf("%s", jogador_kits_idx.arquivo_primario);
+        printf("%s\n", jogador_kits_idx.arquivo_primario);
 }
 
 // Utilizando  a lógica do trabalho anterior como base
@@ -1306,21 +1342,23 @@ void inverted_list_insert(char *chave_secundaria, char *chave_primaria, inverted
         t->qtd_registros_secundario++;
         // Inserindo o jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_primario, "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_primario*reg_primario, "%s%04d", chave_primaria, -1);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
         // Ordenando o índice secundário
-        qsort(t->arquivo_secundario, t->qtd_registros_secundario, t->tam_chave_secundaria, t->compar);
+        qsort(t->arquivo_secundario, t->qtd_registros_secundario, t->tam_chave_secundaria + TAM_RRN_REGISTRO, t->compar);
     } else {
         // Recuperando o índice final da lista encadeada
         int indice_final;
         inverted_list_primary_search(NULL, false, indice_secundario, &indice_final, t);
         // Inserindo o novo jogador no índice primário
         // fseek(t->arquivo_primario, t->qtd_registros_primario * (t->tam_chave_primaria + sizeof(int)), SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_secundario, "%s%04d", chave_primaria, -1);
+        sprintf(t->arquivo_primario + t->qtd_registros_primario*reg_primario, "%s%04d", chave_primaria, -1);
         // Atualizando o próximo índice do último jogador na lista encadeada
         // fseek(t->arquivo_primario, indice_final * (t->tam_chave_primaria + sizeof(int)) + t->tam_chave_primaria, SEEK_SET);
-        sprintf(t->arquivo_primario + t->qtd_registros_secundario*reg_primario + t->tam_chave_primaria, "%04d", t->qtd_registros_primario);
+        char str[5];
+        sprintf(str, "%04d", t->qtd_registros_primario);
+        strncpy(t->arquivo_primario + indice_final*reg_primario + t->tam_chave_primaria, str, 4);
         // Incrementando a quantidade de registros primários
         t->qtd_registros_primario++;
     }
@@ -1440,14 +1478,12 @@ int inverted_list_primary_search(char result[][TAM_CHAVE_JOGADOR_KIT_PRIMARIO_ID
             printf(" %d", atoi(indice_temp)); // Exibe o índice da chave
         }
 
+        
+        if(indice_final) 
+            (*indice_final) = atoi(indice_temp); // Atualiza o índice final
+
         // Atualiza o índice temporário com o próximo índice
         strncpy(indice_temp, (t->arquivo_primario + (atoi(indice_temp) * (TAM_ID_JOGADOR-1 + TAM_RRN_REGISTRO)) + t->tam_chave_primaria), TAM_RRN_REGISTRO);
-
-        // Verifica se chegou à última chave
-        if(atoi(indice_temp) == -1) { 
-            if(indice_final) 
-                (*indice_final) = atoi(indice_temp); // Define o índice final
-        }
     }
 
     // Pula uma linha caso o caminho tenha sido solicitado
@@ -2179,7 +2215,7 @@ int btree_search_in_order(char **result, char *chave_inicio, char *chave_fim, in
         // Verifica se 'inicio' e 'fim' são nulas e se a chave está dentro do período
         if ((chave_inicio == NULL || strcmp(no_atual.chaves[i], chave_inicio) >= 0) &&
             (chave_fim == NULL || strcmp(no_atual.chaves[i], chave_fim) <= 0)) {
-            result[qtd] = strdup(no_atual.chaves[i]);
+            strcpy(result[qtd], no_atual.chaves[i]);
             qtd++;
         }
 
